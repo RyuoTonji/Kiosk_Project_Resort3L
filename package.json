@@ -1,0 +1,45 @@
+{
+  "name": "kiosk-project-001",
+  "version": "1.0.0",
+  "description": "Production-grade, local-first self-service ordering kiosk built with Electron, SQLite, and Tailwind CSS",
+  "main": "dist/main.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ./renderer/css/input.css -o ./renderer/css/output.css --minify",
+    "build:main": "esbuild electron/main/main.ts --bundle --platform=node --target=node20 --outfile=dist/main.js --external:electron --external:better-sqlite3",
+    "build:preload": "esbuild electron/preload/preload.ts --bundle --platform=node --target=node20 --outfile=dist/preload.js --external:electron",
+    "build": "npm run build:css && npm run build:main && npm run build:preload",
+    "watch:css": "tailwindcss -i ./renderer/css/input.css -o ./renderer/css/output.css --watch",
+    "watch:main": "esbuild electron/main/main.ts --bundle --platform=node --target=node20 --outfile=dist/main.js --external:electron --external:better-sqlite3 --watch",
+    "watch:preload": "esbuild electron/preload/preload.ts --bundle --platform=node --target=node20 --outfile=dist/preload.js --external:electron --watch",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
+    "dev": "npm run build && concurrently -k -n \"CSS,MAIN,PRELOAD,APP\" -c \"blue,magenta,cyan,green\" \"npm run watch:css\" \"npm run watch:main\" \"npm run watch:preload\" \"electron .\"",
+    "start": "electron .",
+    "test": "cross-env ELECTRON_RUN_AS_NODE=1 electron tests/run-all-tests.js"
+  },
+  "keywords": [
+    "electron",
+    "kiosk",
+    "local-first",
+    "sqlite",
+    "touchscreen"
+  ],
+  "author": "Antigravity Architect",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "better-sqlite3": "^11.8.1"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.2.0",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.2",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.1",
+    "esbuild": "^0.24.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  }
+}

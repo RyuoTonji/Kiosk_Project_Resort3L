@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Wireframe / Prototype Kiosk Environment */
+  html, body {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #18181B; /* Dark neutral chassis */
+    color: #09090B;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  /* Monospace Receipt Styles */
+  .font-receipt {
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  /* Touch scrolling */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #A1A1AA;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #71717A;
+  }
+}
+
+@layer utilities {
+  .touch-press:active {
+    transform: scale(0.97);
+    transition: transform 0.06s ease-out;
+  }
+
+  .kiosk-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: #FAFAFA;
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  }
+
+  .kiosk-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.98);
+  }
+
+  .kiosk-screen.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+  }
+
+  .wireframe-border {
+    border: 2px solid #27272A;
+  }
+
+  .wireframe-dashed {
+    border: 2px dashed #71717A;
+  }
+
+  .receipt-zigzag {
+    background: radial-gradient(circle, transparent, transparent 50%, #ffffff 50%, #ffffff 100%);
+    background-size: 16px 16px;
+  }
+}

@@ -1,0 +1,38 @@
+# PowerSync Synchronization Rules Configuration
+# Defines replication streams between Supabase PostgreSQL and local SQLite on kiosks
+
+bucket_definitions:
+  # Global Bucket: Syncs active menu catalog to all kiosks
+  global_menu:
+    data:
+      - SELECT
+          id,
+          name,
+          category,
+          price,
+          image_url,
+          base_ingredients_json,
+          active,
+          updated_at
+        FROM public.menu_items
+        WHERE active = true
+
+  # Kiosk Orders Bucket: Syncs local kiosk orders up to central cloud
+  kiosk_orders:
+    parameters:
+      - kiosk_id
+    data:
+      - SELECT
+          id,
+          order_number,
+          dining_mode,
+          payment_method,
+          subtotal,
+          vat,
+          total_amount,
+          items_recipe_json,
+          kiosk_id,
+          created_at,
+          synced_at
+        FROM public.kiosk_orders
+        WHERE kiosk_id = bucket.kiosk_id
