@@ -1,7 +1,7 @@
-// 3L's Beach Resort — Production-Grade Touchscreen Kiosk Controller (DaisyUI & Vanilla ES Modules)
+// Production-Grade Offline Kiosk Controller (Poster Screen, Counter Payment & 5s Auto-Close Receipt)
 
 // Pure SVG Barcode Generator Utility
-function generateBarcodeSVG(codeText, width = 280, height = 65) {
+function generateBarcodeSVG(codeText, width = 260, height = 65) {
   let pattern = '10100110110'; // Guard bars
   for (let i = 0; i < codeText.length; i++) {
     const charCode = codeText.charCodeAt(i);
@@ -17,13 +17,13 @@ function generateBarcodeSVG(codeText, width = 280, height = 65) {
   for (let i = 0; i < pattern.length; i++) {
     if (pattern[i] === '1') {
       const x = (i * barWidth).toFixed(2);
-      rects += `<rect x="${x}" y="0" width="${barWidth.toFixed(2)}" height="${height}" fill="#0F172A" />`;
+      rects += `<rect x="${x}" y="0" width="${barWidth.toFixed(2)}" height="${height}" fill="#000000" />`;
     }
   }
 
   return `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" class="block">
-      <rect width="${width}" height="${height}" fill="#FFFFFF"/>
+      <rect width="${width}" height="${height}" fill="#ffffff"/>
       ${rects}
     </svg>
   `;
@@ -34,27 +34,17 @@ function formatCentavos(centavos) {
   return '₱' + (centavos / 100).toFixed(2);
 }
 
-// Category Metadata Dictionary
-const CATEGORY_META = {
-  all: { icon: '🏝️', labelEn: 'All Items', labelFil: 'Lahat' },
-  refreshments: { icon: '🍹', labelEn: 'Refreshments', labelFil: 'Mga Inumin' },
-  meals: { icon: '🍽️', labelEn: 'Beach Meals', labelFil: 'Mga Pagkain' },
-  snacks: { icon: '🍟', labelEn: 'Beach Snacks', labelFil: 'Merienda' },
-  activities: { icon: '🤿', labelEn: 'Resort Gear', labelFil: 'Mga Gamit & Activities' }
-};
-
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log("[3L's Beach Resort] Initializing touchscreen kiosk controller...");
+  console.log('[Kiosk] Initializing poster welcome and cashier counter payment kiosk flow...');
 
-  // --- APPLICATION STATE ---
-  let diningMode = 'food-drinks'; // 'food-drinks' | 'resort-activities'
+  // --- STATE ---
+  let diningMode = 'dine-in';
   let activeCategory = 'all';
   let categories = [];
   let menuItems = [];
   let cart = []; // Array of ordered items
   let nextOrderNumber = 42;
   let isTrayExpanded = false;
-  let currentLanguage = 'EN'; // 'EN' | 'FIL'
 
   // Customizer modal state
   let modalMode = 'add'; // 'add' | 'edit'
@@ -78,12 +68,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const menuOrderNum = document.getElementById('menu-order-num');
   const menuDiningTag = document.getElementById('menu-dining-tag');
+  const headerItemsCount = document.getElementById('header-items-count');
   const currentCategoryLabel = document.getElementById('current-category-label');
   const categoryButtonContainer = document.getElementById('category-button-container');
   const menuProductGrid = document.getElementById('menu-product-grid');
-
-  const langEn = document.getElementById('lang-en');
-  const langFil = document.getElementById('lang-fil');
 
   // Bottom Tray Elements
   const trayHandleBar = document.getElementById('tray-handle-bar');
@@ -122,35 +110,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- SCREEN SWITCHING ---
   function showScreen(screen) {
     [screenWelcome, screenDining, screenMenu, screenConfirmed].forEach((s) => {
-      if (s) {
-        s.classList.add('hidden');
-        s.classList.remove('active');
-      }
+      s.classList.add('hidden');
+      s.classList.remove('active');
     });
-    if (screen) {
-      screen.classList.remove('hidden');
-      screen.classList.add('active');
-    }
+    screen.classList.remove('hidden');
+    screen.classList.add('active');
   }
-
-  // --- LANGUAGE SWITCHER ---
-  function setLanguage(lang) {
-    currentLanguage = lang;
-    if (langEn && langFil) {
-      if (lang === 'EN') {
-        langEn.className = 'px-2 py-0.5 text-[10px] font-black rounded bg-amber-400 text-slate-950';
-        langFil.className = 'px-2 py-0.5 text-[10px] font-black rounded text-sky-300 hover:text-white';
-      } else {
-        langFil.className = 'px-2 py-0.5 text-[10px] font-black rounded bg-amber-400 text-slate-950';
-        langEn.className = 'px-2 py-0.5 text-[10px] font-black rounded text-sky-300 hover:text-white';
-      }
-    }
-    renderCategories();
-    renderMenuItems();
-  }
-
-  if (langEn) langEn.addEventListener('click', () => setLanguage('EN'));
-  if (langFil) langFil.addEventListener('click', () => setLanguage('FIL'));
 
   // --- INITIALIZE DATA FROM SQLITE ---
   async function loadInitialData() {
@@ -177,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // --- RENDER CATEGORIES SIDEBAR (DAISYUI TABS) ---
+  // --- RENDER CATEGORIES SIDEBAR ---
   function renderCategories() {
     if (!categoryButtonContainer) return;
     categoryButtonContainer.innerHTML = '';
@@ -185,34 +150,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const allCats = ['all', ...categories];
 
     allCats.forEach((cat) => {
-      const meta = CATEGORY_META[cat.toLowerCase()] || { icon: '🌴', labelEn: cat, labelFil: cat };
-      const label = currentLanguage === 'FIL' ? meta.labelFil : meta.labelEn;
-      const isActive = cat.toLowerCase() === activeCategory.toLowerCase();
-
-      const li = document.createElement('li');
       const btn = document.createElement('button');
-      btn.className = `w-full py-3 px-2.5 rounded-xl text-left text-xs font-black uppercase touch-press transition-all flex items-center gap-2 shadow-xs ${
-        isActive
-          ? 'bg-sky-900 text-amber-300 shadow-md border-2 border-amber-400'
-          : 'bg-white hover:bg-sky-100 text-slate-700 border border-sky-200'
+      const isActive = cat === activeCategory;
+      btn.className = `w-full py-2.5 px-2 text-left text-[11px] font-bold border-2 border-zinc-900 uppercase touch-press transition-all ${
+        isActive ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900 hover:bg-zinc-100'
       }`;
-
-      btn.innerHTML = `
-        <span class="text-base">${meta.icon}</span>
-        <span class="leading-tight flex-1 line-clamp-2">${label}</span>
-      `;
-
+      btn.textContent = `[ ${cat.toUpperCase()} ]`;
       btn.addEventListener('click', () => {
         activeCategory = cat;
-        if (currentCategoryLabel) {
-          currentCategoryLabel.textContent = `${meta.icon} ${label.toUpperCase()}`;
-        }
+        if (currentCategoryLabel) currentCategoryLabel.textContent = `${cat.toUpperCase()} ITEMS`;
         renderCategories();
         renderMenuItems();
       });
-
-      li.appendChild(btn);
-      categoryButtonContainer.appendChild(li);
+      categoryButtonContainer.appendChild(btn);
     });
   }
 
@@ -226,41 +176,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       : menuItems.filter((i) => i.category.toLowerCase() === activeCategory.toLowerCase());
 
     filtered.forEach((item) => {
-      const meta = CATEGORY_META[item.category.toLowerCase()] || { icon: '🌴', labelEn: item.category };
       const card = document.createElement('div');
-      card.className = 'bg-white rounded-2xl border-2 border-sky-200 p-2.5 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-sky-400 cursor-pointer touch-press transition-all group relative overflow-hidden';
+      card.className = 'bg-zinc-50 border-2 border-zinc-900 p-2.5 flex flex-col justify-between shadow-xs hover:border-zinc-950 cursor-pointer touch-press transition-all group';
 
-      const photoBanner = `
-        <div class="w-full aspect-square rounded-xl bg-gradient-to-br from-sky-100 via-sky-50 to-amber-50 border border-sky-100 flex flex-col items-center justify-center text-center p-2 mb-2 group-hover:bg-sky-100 transition-colors relative">
-          <span class="text-3xl filter drop-shadow-xs">${meta.icon}</span>
-          <span class="text-[9px] font-black text-sky-800 uppercase tracking-widest mt-1">${item.category}</span>
-          <div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 text-[8px] font-bold">
-            READY
-          </div>
+      const imageBox = `
+        <div class="w-full aspect-square border-2 border-dashed border-zinc-400 bg-white flex flex-col items-center justify-center text-center p-2 mb-2 group-hover:border-zinc-900 transition-colors">
+          <span class="text-[10px] font-bold text-zinc-400 uppercase">[ ITEM PREVIEW ]</span>
+          <span class="text-[9px] font-mono text-zinc-300 mt-1">${item.category.toUpperCase()}</span>
         </div>
       `;
 
       card.innerHTML = `
-        ${photoBanner}
+        ${imageBox}
         <div class="flex-1 flex flex-col justify-between">
           <div>
-            <div class="text-[11px] font-black uppercase text-slate-900 line-clamp-2 leading-tight">${item.name}</div>
-            <div class="inline-block mt-1 px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-xs font-mono shadow-xs">
-              ${formatCentavos(item.price)}
-            </div>
+            <div class="text-[11px] font-black uppercase text-zinc-900 line-clamp-2 leading-tight">${item.name}</div>
+            <div class="text-xs font-black text-zinc-900 mt-1 font-mono">${formatCentavos(item.price)}</div>
           </div>
-          <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-[9px] text-sky-700 font-bold uppercase underline group-hover:text-sky-900">
-              Customize
-            </span>
-            <button class="btn btn-xs btn-primary text-slate-950 font-black touch-press rounded-lg shadow-xs uppercase">
+          <div class="mt-2.5 pt-2 border-t border-zinc-200">
+            <button class="btn-card-add w-full py-2 bg-zinc-900 active:bg-zinc-700 text-white text-[11px] font-black touch-press uppercase tracking-wider text-center">
               + ADD
             </button>
           </div>
         </div>
       `;
 
-      // Clicking anywhere on the entire card opens the customization modal!
+      // Clicking anywhere on the entire card or the + ADD button opens the customization modal!
       card.addEventListener('click', () => {
         openCustomizationModal(item, 'add');
       });
@@ -293,14 +234,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (custItemName) custItemName.textContent = item.name.toUpperCase();
     if (custModalBadge) {
-      custModalBadge.textContent = mode === 'edit'
-        ? '[ EDIT ORDERED RECIPE ]'
-        : '[ CUSTOMIZE YOUR SELECTION ]';
+      custModalBadge.textContent = mode === 'edit' ? '[ EDIT ORDERED RECIPE ]' : '[ CUSTOMIZE RECIPE ]';
     }
     if (custBtnConfirm) {
-      custBtnConfirm.textContent = mode === 'edit'
-        ? (currentLanguage === 'FIL' ? 'I-UPDATE' : 'UPDATE ORDER')
-        : (currentLanguage === 'FIL' ? 'IDAGDAG SA ORDER' : 'ADD TO ORDER');
+      custBtnConfirm.textContent = mode === 'edit' ? 'UPDATE ORDER' : 'ADD ORDER';
     }
 
     function calculateModalPrice() {
@@ -329,16 +266,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       ingredients.forEach((ing) => {
         const label = document.createElement('label');
-        label.className = 'flex items-center justify-between p-3 rounded-xl border-2 border-slate-200 bg-white hover:bg-sky-50 cursor-pointer select-none transition-colors shadow-xs';
+        label.className = 'flex items-center justify-between p-2.5 border-2 border-zinc-200 bg-zinc-50 hover:bg-zinc-100 cursor-pointer select-none';
 
         const priceBadge = ing.price_delta > 0
-          ? `<span class="text-xs font-black font-mono text-emerald-700">+${formatCentavos(ing.price_delta)}</span>`
-          : (ing.required ? '<span class="text-[9px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-0.5 rounded">[ REQUIRED ]</span>' : '');
+          ? `<span class="text-xs font-bold font-mono text-zinc-900">+${formatCentavos(ing.price_delta)}</span>`
+          : (ing.required ? '<span class="text-[10px] font-bold uppercase text-zinc-400">[ REQUIRED ]</span>' : '');
 
         label.innerHTML = `
-          <div class="flex items-center gap-3">
-            <input type="checkbox" ${activeCustomizingRecipe[ing.id] ? 'checked' : ''} ${ing.required ? 'disabled' : ''} class="checkbox checkbox-primary checkbox-sm rounded-md cursor-pointer">
-            <span class="text-xs font-bold uppercase text-slate-800">${ing.name}</span>
+          <div class="flex items-center gap-2.5">
+            <input type="checkbox" ${activeCustomizingRecipe[ing.id] ? 'checked' : ''} ${ing.required ? 'disabled' : ''} class="w-4 h-4 border-2 border-zinc-900 rounded-none cursor-pointer">
+            <span class="text-xs font-bold uppercase text-zinc-800">${ing.name}</span>
           </div>
           ${priceBadge}
         `;
@@ -472,6 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (totalVat) totalVat.textContent = formatCentavos(vat);
     if (totalGrand) totalGrand.textContent = formatCentavos(grandTotal);
     if (trayQuickTotal) trayQuickTotal.textContent = formatCentavos(grandTotal);
+    if (headerItemsCount) headerItemsCount.textContent = count;
     if (traySummaryCount) traySummaryCount.textContent = count;
     if (btnProceedCheckout) btnProceedCheckout.disabled = cart.length === 0;
 
@@ -485,8 +423,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (cart.length === 0) {
       summaryItemsList.innerHTML = `
-        <div class="text-center py-6 text-xs text-slate-400 font-bold uppercase">
-          [ NO ITEMS ADDED YET — TAP ANY ITEM ABOVE ]
+        <div class="text-center py-6 text-xs text-zinc-400 font-bold uppercase">
+          [ NO ITEMS ADDED YET - TAP ANY ITEM ABOVE ]
         </div>
       `;
       return;
@@ -494,34 +432,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     cart.forEach((cartItem, idx) => {
       const row = document.createElement('div');
-      row.className = 'p-3 rounded-2xl border-2 border-sky-200 bg-white hover:bg-sky-50 flex items-center justify-between text-xs cursor-pointer select-none transition-colors group shadow-xs';
+      row.className = 'p-2.5 border-2 border-zinc-900 bg-zinc-50 hover:bg-zinc-100 flex items-center justify-between text-xs cursor-pointer select-none transition-colors group';
 
       const modHtml = cartItem.modifiersSummary && cartItem.modifiersSummary.length > 0
-        ? `<div class="text-[10px] text-sky-700 mt-0.5 font-mono">${cartItem.modifiersSummary.join(', ')}</div>`
+        ? `<div class="text-[10px] text-zinc-500 mt-0.5 font-mono">${cartItem.modifiersSummary.join(', ')}</div>`
         : '';
 
       row.innerHTML = `
         <div class="flex-1 pr-3 row-clickable">
-          <div class="font-black text-slate-900 uppercase flex items-center gap-1.5">
+          <div class="font-black text-zinc-900 uppercase flex items-center gap-1.5">
             <span>${cartItem.name}</span>
-            <span class="text-[9px] font-bold text-sky-600 opacity-0 group-hover:opacity-100 transition-opacity underline">
-              [ Tap line to edit ]
+            <span class="text-[9px] font-normal text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity underline">
+              [ Tap line to customize ]
             </span>
           </div>
-          <div class="text-[10px] font-mono text-slate-600">${formatCentavos(cartItem.unitPrice)} each</div>
+          <div class="text-[10px] font-mono text-zinc-600">${formatCentavos(cartItem.unitPrice)} each</div>
           ${modHtml}
         </div>
 
         <div class="flex items-center gap-2.5 shrink-0" onclick="event.stopPropagation()">
-          <div class="flex items-center rounded-lg border-2 border-slate-300 bg-slate-50 overflow-hidden">
-            <button class="btn-dec px-2.5 py-1 font-black touch-press hover:bg-slate-200 text-slate-800">-</button>
-            <span class="px-2 font-bold font-mono text-xs text-slate-900">${cartItem.quantity}</span>
-            <button class="btn-inc px-2.5 py-1 font-black touch-press hover:bg-slate-200 text-slate-800">+</button>
+          <div class="flex items-center border-2 border-zinc-900 bg-white">
+            <button class="btn-dec px-2.5 py-1 font-black touch-press hover:bg-zinc-100">-</button>
+            <span class="px-2 font-bold font-mono text-xs">${cartItem.quantity}</span>
+            <button class="btn-inc px-2.5 py-1 font-black touch-press hover:bg-zinc-100">+</button>
           </div>
-          <div class="w-16 text-right font-black font-mono text-xs text-emerald-800">
+          <div class="w-16 text-right font-black font-mono text-xs">
             ${formatCentavos(cartItem.unitPrice * cartItem.quantity)}
           </div>
-          <button class="btn-del text-red-500 hover:text-red-700 font-bold px-1.5 touch-press">[✕]</button>
+          <button class="btn-del text-red-600 font-bold px-1.5 hover:underline touch-press">[X]</button>
         </div>
       `;
 
@@ -571,11 +509,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (optDineIn) {
     optDineIn.addEventListener('click', (e) => {
       e.stopPropagation();
-      diningMode = 'food-drinks';
-      if (menuDiningTag) menuDiningTag.textContent = 'FOOD & DRINKS';
-      activeCategory = 'refreshments';
-      renderCategories();
-      renderMenuItems();
+      diningMode = 'dine-in';
+      if (menuDiningTag) menuDiningTag.textContent = 'DINE IN';
       showScreen(screenMenu);
     });
   }
@@ -583,11 +518,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (optTakeOut) {
     optTakeOut.addEventListener('click', (e) => {
       e.stopPropagation();
-      diningMode = 'resort-activities';
-      if (menuDiningTag) menuDiningTag.textContent = 'ACTIVITIES & GEAR';
-      activeCategory = 'activities';
-      renderCategories();
-      renderMenuItems();
+      diningMode = 'take-out';
+      if (menuDiningTag) menuDiningTag.textContent = 'TAKE OUT';
       showScreen(screenMenu);
     });
   }
@@ -619,7 +551,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const { subtotal, vat, grandTotal } = calculateTotals();
 
       try {
-        // 1. Commit Order to SQLite with 'cashier-counter'
+        // 1. Commit Order to SQLite with 'pay-at-counter'
         const orderDTO = {
           diningMode: diningMode,
           paymentMethod: 'cashier-counter',
@@ -629,12 +561,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           items: cart
         };
 
-        console.log("[3L's Beach Resort] Registering order in SQLite for cashier counter payment...");
+        console.log('[Kiosk] Registering order in SQLite for cashier counter payment...');
         const createdOrder = await window.kioskAPI.createOrder(orderDTO);
         currentOrderResult = createdOrder;
 
         // 2. Auto-Print Thermal Receipt for the Cashier
-        console.log("[3L's Beach Resort] Auto-printing cashier confirmation receipt...");
+        console.log('[Kiosk] Auto-printing cashier confirmation receipt...');
         const printResult = await window.kioskAPI.printReceipt({
           orderId: createdOrder.id,
           orderNumber: createdOrder.orderNumber,
@@ -645,8 +577,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           totalAmount: createdOrder.totalAmount,
           items: cart,
           createdAt: createdOrder.createdAt,
-          storeName: "3L's Beach Resort",
-          kioskId: '3LS-BEACH-KIOSK-01'
+          storeName: 'EXPRESS ORDER KIOSK',
+          kioskId: 'COUNTER PAYMENT SLIP'
         });
 
         lastReceiptText = printResult.receiptText;
@@ -655,18 +587,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const dateFormatted = new Date(createdOrder.createdAt).toLocaleString('en-US');
         if (confirmTimestamp) confirmTimestamp.textContent = dateFormatted;
         if (confirmOrderNumber) confirmOrderNumber.textContent = '#' + String(createdOrder.orderNumber).padStart(3, '0');
-        if (confirmDiningMode) {
-          confirmDiningMode.textContent = createdOrder.diningMode === 'resort-activities'
-            ? 'ACTIVITIES & GEAR'
-            : 'FOOD & DRINKS';
-        }
+        if (confirmDiningMode) confirmDiningMode.textContent = createdOrder.diningMode.toUpperCase().replace('-', ' ');
 
         // 4. Generate and Display Barcode for Cashier Scan
         const barcodeCode = `ORD-${String(createdOrder.orderNumber).padStart(3, '0')}-${createdOrder.id.substring(0, 8).toUpperCase()}`;
-        if (barcodeContainer) barcodeContainer.innerHTML = generateBarcodeSVG(barcodeCode, 280, 60);
+        if (barcodeContainer) barcodeContainer.innerHTML = generateBarcodeSVG(barcodeCode, 260, 60);
         if (barcodeLabel) barcodeLabel.textContent = barcodeCode;
 
-        // 5. Show Confirmation Screen with instructions
+        // 5. Show Confirmation Screen with instructions (Receipt prints physically at the kiosk)
         showScreen(screenConfirmed);
 
         // Start 5-second countdown directly on confirmation screen
@@ -709,4 +637,3 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Boot Kiosk Catalog Data
   loadInitialData();
 });
-

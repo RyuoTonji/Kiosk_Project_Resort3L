@@ -53,20 +53,22 @@ export function runMigrations(db: Database.Database): void {
 
   // Initialize Default Settings if not present
   const initSetting = db.prepare(`
-    INSERT OR REPLACE INTO kiosk_settings (key, value, updated_at)
+    INSERT OR IGNORE INTO kiosk_settings (key, value, updated_at)
     VALUES (?, ?, datetime('now'))
   `);
 
   initSetting.run('current_order_number', '42');
-  initSetting.run('kiosk_id', '3LS-BEACH-KIOSK-01');
-  initSetting.run('store_name', "3L's Beach Resort");
+  initSetting.run('kiosk_id', 'KIOSK-TERMINAL-01');
+  initSetting.run('store_name', 'EXPRESS ORDER TERMINAL');
 
   seedDefaultMenu(db);
 }
 
 function seedDefaultMenu(db: Database.Database): void {
-  // Clear and reseed 3L's Beach Resort menu items
-  db.exec(`DELETE FROM menu_items;`);
+  const countRow = db.prepare(`SELECT COUNT(*) as count FROM menu_items`).get() as { count: number };
+  if (countRow && countRow.count > 0) {
+    return; // Already seeded
+  }
 
   const insertStmt = db.prepare(`
     INSERT INTO menu_items (id, name, category, price, image_url, base_ingredients_json, active, updated_at)
@@ -74,233 +76,215 @@ function seedDefaultMenu(db: Database.Database): void {
   `);
 
   const seedItems = [
-    // --- REFRESHMENTS & SHAKES ---
+    // --- CHICKEN ---
     {
-      id: 'ref-001',
-      name: 'Fresh Coconut Water (Buko Shell)',
-      category: 'refreshments',
-      price: 9500,
+      id: 'chk-001',
+      name: '1-pc Fried Chicken with Rice',
+      category: 'chicken',
+      price: 8900,
       image_url: null,
       base_ingredients_json: JSON.stringify([
-        { id: 'buko-water', name: 'Fresh Young Coconut Water', included: true, required: true, price_delta: 0 },
-        { id: 'buko-meat', name: 'Tender Coconut Meat', included: true, required: true, price_delta: 0 },
-        { id: 'ice', name: 'Chilled on Ice', included: true, required: false, price_delta: 0 },
-        { id: 'condensed', name: 'Sweet Milk Drizzle', included: false, required: false, price_delta: 1500 }
+        { id: 'chicken', name: 'Fried Chicken Piece', included: true, required: true, price_delta: 0 },
+        { id: 'rice', name: 'Steamed Rice', included: true, required: true, price_delta: 0 },
+        { id: 'gravy', name: 'Signature Gravy', included: true, required: false, price_delta: 0 },
+        { id: 'extra-gravy', name: 'Extra Gravy Tub', included: false, required: false, price_delta: 1500 },
+        { id: 'extra-rice', name: 'Extra Steamed Rice', included: false, required: false, price_delta: 2500 }
       ])
     },
     {
-      id: 'ref-002',
-      name: 'Tropical Ripe Mango Shake',
-      category: 'refreshments',
-      price: 12000,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'mango', name: 'Guimaras Sweet Mango Purée', included: true, required: true, price_delta: 0 },
-        { id: 'crushed-ice', name: 'Blended Shaved Ice', included: true, required: true, price_delta: 0 },
-        { id: 'milk', name: 'Sweetened Evaporated Milk', included: true, required: false, price_delta: 0 },
-        { id: 'tapioca', name: 'Chewy Tapioca Pearls', included: false, required: false, price_delta: 2000 },
-        { id: 'upsize', name: 'Upsize to 24oz Giant Cup', included: false, required: false, price_delta: 3500 }
-      ])
-    },
-    {
-      id: 'ref-003',
-      name: 'Halo-Halo Supreme Special',
-      category: 'refreshments',
-      price: 16500,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'ube-icecream', name: 'Ube Ice Cream Scoop', included: true, required: true, price_delta: 0 },
-        { id: 'leche-flan', name: 'Creamy Leche Flan Slice', included: true, required: true, price_delta: 0 },
-        { id: 'sweet-beans', name: 'Sweetened Beans & Nata', included: true, required: true, price_delta: 0 },
-        { id: 'shaved-ice', name: 'Fine Milky Shaved Ice', included: true, required: true, price_delta: 0 },
-        { id: 'extra-ube', name: 'Double Ube Scoop', included: false, required: false, price_delta: 3000 },
-        { id: 'extra-flan', name: 'Extra Leche Flan Slice', included: false, required: false, price_delta: 2500 }
-      ])
-    },
-    {
-      id: 'ref-004',
-      name: 'Iced Calamansi Honey Cooler',
-      category: 'refreshments',
-      price: 8500,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'calamansi', name: 'Freshly Squeezed Calamansi', included: true, required: true, price_delta: 0 },
-        { id: 'honey', name: 'Wild Forest Honey', included: true, required: false, price_delta: 0 },
-        { id: 'mint', name: 'Fresh Garden Mint Leaves', included: true, required: false, price_delta: 0 },
-        { id: 'chia', name: 'Organic Chia Seeds', included: false, required: false, price_delta: 1500 }
-      ])
-    },
-    {
-      id: 'ref-005',
-      name: 'Pineapple Sunset Mocktail',
-      category: 'refreshments',
-      price: 13500,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'pineapple', name: 'Fresh Pineapple Juice', included: true, required: true, price_delta: 0 },
-        { id: 'grenadine', name: 'Ruby Sunset Grenadine', included: true, required: true, price_delta: 0 },
-        { id: 'sparkling', name: 'Sparkling Soda Water', included: true, required: true, price_delta: 0 },
-        { id: 'cherry', name: 'Maraschino Cherry & Umbrella', included: true, required: false, price_delta: 0 }
-      ])
-    },
-
-    // --- BEACHSIDE MEALS ---
-    {
-      id: 'meal-001',
-      name: 'Charcoal-Grilled Pork Liempo with Rice',
-      category: 'meals',
-      price: 22000,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'liempo', name: 'Marinated Pork Belly Cut', included: true, required: true, price_delta: 0 },
-        { id: 'garlic-rice', name: 'Garlic Butter Rice', included: true, required: true, price_delta: 0 },
-        { id: 'atsara', name: 'Pickled Papaya Atsara', included: true, required: false, price_delta: 0 },
-        { id: 'spicy-toyo', name: 'Spicy Soy-Calamansi Dip', included: true, required: false, price_delta: 0 },
-        { id: 'extra-rice', name: 'Extra Garlic Rice', included: false, required: false, price_delta: 3000 }
-      ])
-    },
-    {
-      id: 'meal-002',
-      name: 'Garlic Butter Sizzling Shrimp',
-      category: 'meals',
-      price: 28000,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'prawns', name: 'Fresh Pacific Prawns (8 pcs)', included: true, required: true, price_delta: 0 },
-        { id: 'butter-sauce', name: 'Garlic Butter Reduction', included: true, required: true, price_delta: 0 },
-        { id: 'steamed-rice', name: 'Jasmine Rice Cup', included: true, required: true, price_delta: 0 },
-        { id: 'chili-flakes', name: 'Roasted Chili Flakes', included: true, required: false, price_delta: 0 },
-        { id: 'extra-prawns', name: 'Add 4 More Jumbo Prawns', included: false, required: false, price_delta: 12000 }
-      ])
-    },
-    {
-      id: 'meal-003',
-      name: 'Bacolod Chicken Inasal Quarter',
-      category: 'meals',
-      price: 19500,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'inasal-leg', name: 'Lemongrass Grilled Chicken Leg', included: true, required: true, price_delta: 0 },
-        { id: 'chicken-oil', name: 'Golden Annatto Chicken Oil', included: true, required: false, price_delta: 0 },
-        { id: 'steamed-rice', name: 'Garlic Steamed Rice', included: true, required: true, price_delta: 0 },
-        { id: 'calamansi-dip', name: 'Sinamak Vinegar Dip', included: true, required: false, price_delta: 0 }
-      ])
-    },
-    {
-      id: 'meal-004',
-      name: 'Fresh Yellowfin Tuna Poke Bowl',
-      category: 'meals',
-      price: 26000,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'tuna-cubes', name: 'Sashimi Grade Yellowfin Tuna', included: true, required: true, price_delta: 0 },
-        { id: 'seaweed', name: 'Japanese Wakame Seaweed', included: true, required: true, price_delta: 0 },
-        { id: 'mango-cubes', name: 'Ripe Mango Cubes', included: true, required: false, price_delta: 0 },
-        { id: 'sesame-rice', name: 'Seasoned Sushi Rice', included: true, required: true, price_delta: 0 },
-        { id: 'spicy-mayo', name: 'Spicy Sriracha Japanese Mayo', included: true, required: false, price_delta: 0 }
-      ])
-    },
-
-    // --- BEACH SNACKS & APPETIZERS ---
-    {
-      id: 'snk-001',
-      name: 'Crispy Calamares with Garlic Aioli',
-      category: 'snacks',
+      id: 'chk-002',
+      name: '2-pc Fried Chicken with Drink',
+      category: 'chicken',
       price: 17500,
       image_url: null,
       base_ingredients_json: JSON.stringify([
-        { id: 'calamari', name: 'Golden Crispy Squid Rings', included: true, required: true, price_delta: 0 },
-        { id: 'aioli', name: 'Roasted Garlic Tartar Dip', included: true, required: true, price_delta: 0 },
-        { id: 'lemon-wedge', name: 'Fresh Lemon Wedge', included: true, required: false, price_delta: 0 },
-        { id: 'extra-aioli', name: 'Extra Garlic Aioli Cup', included: false, required: false, price_delta: 2000 }
+        { id: 'chicken-2', name: '2x Fried Chicken Pieces', included: true, required: true, price_delta: 0 },
+        { id: 'rice', name: 'Steamed Rice', included: true, required: true, price_delta: 0 },
+        { id: 'gravy', name: 'Signature Gravy', included: true, required: false, price_delta: 0 },
+        { id: 'drink', name: 'Regular Soda', included: true, required: false, price_delta: 0 },
+        { id: 'spicy', name: 'Make it Spicy Powder', included: false, required: false, price_delta: 1000 }
       ])
     },
     {
-      id: 'snk-002',
-      name: 'Beachside Loaded Beef Nachos',
-      category: 'snacks',
-      price: 19000,
+      id: 'chk-003',
+      name: '6-pc Chicken Feast Bucket',
+      category: 'chicken',
+      price: 46900,
       image_url: null,
       base_ingredients_json: JSON.stringify([
-        { id: 'tortilla-chips', name: 'Crispy Corn Tortilla Chips', included: true, required: true, price_delta: 0 },
-        { id: 'melted-cheese', name: 'Warm Cheddar Cheese Sauce', included: true, required: true, price_delta: 0 },
-        { id: 'taco-beef', name: 'Seasoned Ground Beef', included: true, required: true, price_delta: 0 },
-        { id: 'jalapenos', name: 'Pickled Sliced Jalapeños', included: true, required: false, price_delta: 0 },
-        { id: 'sour-cream', name: 'Cool Creamy Sour Dip', included: true, required: false, price_delta: 0 },
-        { id: 'extra-cheese', name: 'Double Melted Cheese', included: false, required: false, price_delta: 3000 }
-      ])
-    },
-    {
-      id: 'snk-003',
-      name: 'Crispy Banana Turon with Caramel & Ice Cream',
-      category: 'snacks',
-      price: 11000,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'turon-rolls', name: '3x Caramelized Banana Rolls', included: true, required: true, price_delta: 0 },
-        { id: 'vanilla-icecream', name: 'Vanilla Ice Cream Scoop', included: true, required: false, price_delta: 0 },
-        { id: 'jackfruit', name: 'Sweet Jackfruit Strips', included: true, required: false, price_delta: 0 }
-      ])
-    },
-    {
-      id: 'snk-004',
-      name: 'Grilled Sweet Butter Corn on the Cob',
-      category: 'snacks',
-      price: 6500,
-      image_url: null,
-      base_ingredients_json: JSON.stringify([
-        { id: 'corn', name: 'Charcoal Grilled Sweet Corn', included: true, required: true, price_delta: 0 },
-        { id: 'butter', name: 'Salted Butter Glaze', included: true, required: true, price_delta: 0 },
-        { id: 'parmesan', name: 'Grated Parmesan Powder', included: false, required: false, price_delta: 1500 }
+        { id: 'chicken-6', name: '6-pc Fried Chicken Pieces', included: true, required: true, price_delta: 0 },
+        { id: 'gravy-large', name: 'Large Gravy Bowl', included: true, required: true, price_delta: 0 },
+        { id: 'extra-gravy', name: 'Extra Gravy Tub', included: false, required: false, price_delta: 1500 }
       ])
     },
 
-    // --- RESORT GEAR & ACTIVITIES ---
+    // --- BURGERS ---
     {
-      id: 'act-001',
-      name: 'Snorkeling Mask & Dry Fin Set (2 Hours)',
-      category: 'activities',
-      price: 25000,
+      id: 'brg-001',
+      name: 'Classic Grilled Beef Burger',
+      category: 'burgers',
+      price: 5000,
       image_url: null,
       base_ingredients_json: JSON.stringify([
-        { id: 'mask', name: 'Anti-Fog Panoramic Mask', included: true, required: true, price_delta: 0 },
-        { id: 'snorkel', name: 'Dry Top Snorkel Tube', included: true, required: true, price_delta: 0 },
-        { id: 'fins', name: 'Adjustable Swimming Fins', included: true, required: true, price_delta: 0 },
-        { id: 'lifevest', name: 'Safety Life Vest Included', included: true, required: true, price_delta: 0 }
+        { id: 'beef-patty', name: '100% Pure Beef Patty', included: true, required: true, price_delta: 0 },
+        { id: 'bun', name: 'Toasted Sesame Bun', included: true, required: true, price_delta: 0 },
+        { id: 'special-sauce', name: 'House Burger Sauce', included: true, required: false, price_delta: 0 },
+        { id: 'pickles', name: 'Dill Pickles', included: true, required: false, price_delta: 0 },
+        { id: 'extra-cheese', name: 'Add Melted Cheddar', included: false, required: false, price_delta: 1500 },
+        { id: 'extra-patty', name: 'Add Extra Beef Patty', included: false, required: false, price_delta: 4000 }
       ])
     },
     {
-      id: 'act-002',
-      name: 'Single Ocean Kayak Rental (1 Hour)',
-      category: 'activities',
-      price: 35000,
+      id: 'brg-002',
+      name: 'Cheesy Bacon Deluxe Burger',
+      category: 'burgers',
+      price: 9500,
       image_url: null,
       base_ingredients_json: JSON.stringify([
-        { id: 'kayak', name: 'Heavy-Duty Ocean Kayak', included: true, required: true, price_delta: 0 },
-        { id: 'paddle', name: 'Ergonomic Dual Paddle', included: true, required: true, price_delta: 0 },
-        { id: 'lifevest', name: 'USCG Approved Life Vest', included: true, required: true, price_delta: 0 }
+        { id: 'beef-patty', name: '100% Pure Beef Patty', included: true, required: true, price_delta: 0 },
+        { id: 'bun', name: 'Toasted Brioche Bun', included: true, required: true, price_delta: 0 },
+        { id: 'cheese', name: 'Cheddar Cheese Slice', included: true, required: true, price_delta: 0 },
+        { id: 'bacon', name: 'Crispy Smoked Bacon', included: true, required: false, price_delta: 0 },
+        { id: 'lettuce', name: 'Fresh Crisp Lettuce', included: true, required: false, price_delta: 0 },
+        { id: 'extra-cheese', name: 'Extra Cheddar Slice', included: false, required: false, price_delta: 1500 }
       ])
     },
     {
-      id: 'act-003',
-      name: "3L's Beach Resort Microfiber Quick-Dry Towel",
-      category: 'activities',
-      price: 29000,
+      id: 'brg-003',
+      name: 'Double Cheeseburger',
+      category: 'burgers',
+      price: 12500,
       image_url: null,
       base_ingredients_json: JSON.stringify([
-        { id: 'towel', name: 'Large Microfiber Beach Towel', included: true, required: true, price_delta: 0 },
-        { id: 'pouch', name: 'Waterproof Zipper Carrying Bag', included: true, required: true, price_delta: 0 }
+        { id: 'patty-double', name: '2x Beef Patties', included: true, required: true, price_delta: 0 },
+        { id: 'bun', name: 'Toasted Bun', included: true, required: true, price_delta: 0 },
+        { id: 'double-cheese', name: '2x Cheddar Cheese', included: true, required: true, price_delta: 0 },
+        { id: 'special-sauce', name: 'Special Sauce', included: true, required: false, price_delta: 0 },
+        { id: 'onions', name: 'Caramelized Onions', included: true, required: false, price_delta: 0 }
+      ])
+    },
+
+    // --- SPAGHETTI ---
+    {
+      id: 'spg-001',
+      name: 'Sweet-Style Spaghetti with Hotdog',
+      category: 'spaghetti',
+      price: 7500,
+      image_url: null,
+      base_ingredients_json: JSON.stringify([
+        { id: 'noodles', name: 'Spaghetti Pasta', included: true, required: true, price_delta: 0 },
+        { id: 'sauce', name: 'Sweet Tomato Meat Sauce', included: true, required: true, price_delta: 0 },
+        { id: 'hotdogs', name: 'Sliced Red Hotdogs', included: true, required: false, price_delta: 0 },
+        { id: 'cheese', name: 'Grated Cheddar Cheese', included: true, required: false, price_delta: 0 },
+        { id: 'extra-cheese', name: 'Double Grated Cheese', included: false, required: false, price_delta: 1500 }
       ])
     },
     {
-      id: 'act-004',
-      name: 'Universal Waterproof Floating Phone Pouch',
-      category: 'activities',
-      price: 15000,
+      id: 'spg-002',
+      name: 'Spaghetti & Chicken Combo',
+      category: 'spaghetti',
+      price: 15500,
       image_url: null,
       base_ingredients_json: JSON.stringify([
-        { id: 'phone-pouch', name: 'Touch-Responsive Waterproof Pouch', included: true, required: true, price_delta: 0 },
-        { id: 'lanyard', name: 'Heavy-Duty Neck Lanyard', included: true, required: true, price_delta: 0 }
+        { id: 'noodles', name: 'Spaghetti Pasta', included: true, required: true, price_delta: 0 },
+        { id: 'sauce', name: 'Sweet Tomato Meat Sauce', included: true, required: true, price_delta: 0 },
+        { id: 'chicken', name: '1-pc Fried Chicken Piece', included: true, required: true, price_delta: 0 },
+        { id: 'gravy', name: 'Gravy Tub', included: true, required: false, price_delta: 0 }
+      ])
+    },
+
+    // --- SIDES ---
+    {
+      id: 'side-001',
+      name: 'Crispy Golden Fries (Regular)',
+      category: 'sides',
+      price: 4500,
+      image_url: null,
+      base_ingredients_json: JSON.stringify([
+        { id: 'fries', name: 'Crispy French Fries', included: true, required: true, price_delta: 0 },
+        { id: 'salt', name: 'Sea Salt', included: true, required: false, price_delta: 0 },
+        { id: 'cheese-powder', name: 'Cheese Flavor Powder', included: false, required: false, price_delta: 1000 },
+        { id: 'bbq-powder', name: 'BBQ Flavor Powder', included: false, required: false, price_delta: 1000 }
+      ])
+    },
+    {
+      id: 'side-002',
+      name: 'Crispy Golden Fries (Large)',
+      category: 'sides',
+      price: 7500,
+      image_url: null,
+      base_ingredients_json: JSON.stringify([
+        { id: 'fries-lg', name: 'Large French Fries', included: true, required: true, price_delta: 0 },
+        { id: 'salt', name: 'Sea Salt', included: true, required: false, price_delta: 0 }
+      ])
+    },
+    {
+      id: 'side-003',
+      name: 'Extra Steamed White Rice',
+      category: 'sides',
+      price: 2500,
+      image_url: null,
+      base_ingredients_json: JSON.stringify([
+        { id: 'steamed-rice', name: 'Steamed Jasmine Rice Cup', included: true, required: true, price_delta: 0 }
+      ])
+    },
+
+    // --- DESSERTS ---
+    {
+      id: 'des-001',
+      name: 'Peach Mango Crispy Turnover Pie',
+      category: 'desserts',
+      price: 4500,
+      image_url: null,
+      base_ingredients_json: JSON.stringify([
+        { id: 'pie', name: 'Crispy Fried Turnover Crust', included: true, required: true, price_delta: 0 },
+        { id: 'filling', name: 'Real Philippine Mango & Peach', included: true, required: true, price_delta: 0 }
+      ])
+    },
+    {
+      id: 'des-002',
+      name: 'Chocolate Fudge Sundae',
+      category: 'desserts',
+      price: 4000,
+      image_url: null,
+      base_ingredients_json: JSON.stringify([
+        { id: 'icecream', name: 'Vanilla Soft Serve', included: true, required: true, price_delta: 0 },
+        { id: 'fudge', name: 'Warm Chocolate Fudge', included: true, required: false, price_delta: 0 },
+        { id: 'extra-fudge', name: 'Extra Chocolate Fudge Layer', included: false, required: false, price_delta: 1500 }
+      ])
+    },
+
+    // --- BEVERAGES ---
+    {
+      id: 'bev-001',
+      name: 'Regular Soft Drink',
+      category: 'beverages',
+      price: 3500,
+      image_url: null,
+      base_ingredients_json: JSON.stringify([
+        { id: 'soda', name: 'Carbonated Soda', included: true, required: true, price_delta: 0 },
+        { id: 'ice', name: 'Crushed Ice', included: true, required: false, price_delta: 0 }
+      ])
+    },
+    {
+      id: 'bev-002',
+      name: 'Large Iced Lemon Tea',
+      category: 'beverages',
+      price: 4500,
+      image_url: null,
+      base_ingredients_json: JSON.stringify([
+        { id: 'tea', name: 'Brewed Lemon Iced Tea', included: true, required: true, price_delta: 0 },
+        { id: 'ice', name: 'Crushed Ice', included: true, required: false, price_delta: 0 }
+      ])
+    },
+    {
+      id: 'bev-003',
+      name: 'Bottled Pure Mineral Water (500ml)',
+      category: 'beverages',
+      price: 3000,
+      image_url: null,
+      base_ingredients_json: JSON.stringify([
+        { id: 'water', name: 'Purified Mineral Water Bottle', included: true, required: true, price_delta: 0 }
       ])
     }
   ];
@@ -313,4 +297,3 @@ function seedDefaultMenu(db: Database.Database): void {
 
   transaction(seedItems);
 }
-
