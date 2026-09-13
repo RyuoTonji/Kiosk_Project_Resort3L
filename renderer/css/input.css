@@ -3,81 +3,118 @@
 @tailwind utilities;
 
 @layer base {
-  /* Wireframe / Prototype Kiosk Environment */
+  /* ============================================================ */
+  /* GLOBAL EMBEDDED KIOSK ENVIRONMENT LOCKDOWN                   */
+  /* ============================================================ */
   html, body {
     user-select: none;
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     -webkit-touch-callout: none;
     touch-action: manipulation;
     overscroll-behavior: none;
-    height: 100%;
+    height: 100vh;
+    width: 100vw;
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #18181B; /* Dark neutral chassis */
-    color: #09090B;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background-color: #0F172A; /* Deep slate outer bezel */
+    color: #0F172A;
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   }
 
-  /* Monospace Receipt Styles */
-  .font-receipt {
-    font-family: 'Courier New', Courier, monospace;
+  /* Prevent image / link drag & ghost ghosting */
+  img, svg, a, button {
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  /* Touch scrolling */
+  /* Monospace Font For Prices & Order Numbers */
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  /* Ultra-smooth Touch Scrolling Bar */
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(2, 132, 199, 0.05);
   }
   ::-webkit-scrollbar-thumb {
-    background: #A1A1AA;
-    border-radius: 4px;
+    background: #0284C7;
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #71717A;
+    background: #0369A1;
   }
 }
 
 @layer utilities {
-  .touch-press:active {
-    transform: scale(0.97);
-    transition: transform 0.06s ease-out;
+  /* Tactile Touch Press Response for Heavy Finger-Tapping */
+  .touch-press {
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background-color 0.12s ease-out;
   }
 
+  .touch-press:active {
+    transform: scale(0.975);
+    opacity: 0.95;
+  }
+
+  /* Fast Screen Transitions */
   .kiosk-screen {
     position: absolute;
     inset: 0;
     display: flex;
     flex-direction: column;
-    background-color: #FAFAFA;
-    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    background-color: #F0F9FF;
+    transition: opacity 0.22s ease-in-out, transform 0.22s ease-in-out;
   }
 
   .kiosk-screen.hidden {
     opacity: 0;
     pointer-events: none;
-    transform: scale(0.98);
+    transform: scale(0.985);
+    visibility: hidden;
   }
 
   .kiosk-screen.active {
     opacity: 1;
     pointer-events: auto;
     transform: scale(1);
+    visibility: visible;
   }
 
-  .wireframe-border {
-    border: 2px solid #27272A;
+  /* Welcome Poster Pulsing CTA Animation */
+  @keyframes pulse-glow {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 10px 30px -5px rgba(245, 158, 11, 0.5), 0 0 0 0 rgba(245, 158, 11, 0.6);
+    }
+    50% {
+      transform: scale(1.035);
+      box-shadow: 0 20px 45px -5px rgba(245, 158, 11, 0.7), 0 0 0 14px rgba(245, 158, 11, 0);
+    }
   }
 
-  .wireframe-dashed {
-    border: 2px dashed #71717A;
+  .animate-pulse-cta {
+    animation: pulse-glow 2.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
   }
 
-  .receipt-zigzag {
-    background: radial-gradient(circle, transparent, transparent 50%, #ffffff 50%, #ffffff 100%);
-    background-size: 16px 16px;
+  /* Gradient Utilities */
+  .bg-tropical-gradient {
+    background: linear-gradient(135deg, #0284C7 0%, #0369A1 50%, #0F172A 100%);
+  }
+
+  .bg-sun-gradient {
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%);
+  }
+
+  .bg-palm-gradient {
+    background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%);
   }
 }
+

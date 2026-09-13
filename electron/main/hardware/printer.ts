@@ -33,8 +33,8 @@ export class MockThermalPrinter implements IPrinterAdapter {
   private printerName = 'VIRTUAL-THERMAL-ESC-POS-80MM';
 
   async printReceipt(params: PrintReceiptParams): Promise<PrintResult> {
-    const store = params.storeName || 'EXPRESS ORDER KIOSK';
-    const kiosk = params.kioskId || 'KIOSK-MNL-001';
+    const store = params.storeName || "3L's Beach Resort";
+    const kiosk = params.kioskId || '3LS-BEACH-KIOSK-01';
     const dateStr = params.createdAt ? new Date(params.createdAt).toLocaleString('en-US', { hour12: true }) : new Date().toLocaleString('en-US', { hour12: true });
     const orderNumStr = String(params.orderNumber).padStart(3, '0');
     const modeStr = params.diningMode.toUpperCase().replace('-', ' ');
