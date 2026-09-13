@@ -65,6 +65,9 @@ export function runMigrations(db: Database.Database): void {
 }
 
 function seedDefaultMenu(db: Database.Database): void {
+  // Purge any legacy activity or resort items if present to solely focus on fast-food menu
+  db.prepare(`DELETE FROM menu_items WHERE category IN ('activities', 'refreshments', 'meals', 'snacks')`).run();
+
   const countRow = db.prepare(`SELECT COUNT(*) as count FROM menu_items`).get() as { count: number };
   if (countRow && countRow.count > 0) {
     return; // Already seeded
