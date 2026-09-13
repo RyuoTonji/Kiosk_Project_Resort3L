@@ -3,39 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kiosk Prototype</title>
+  <title>3L's Beach Resort - Self-Service Kiosk</title>
   <link rel="stylesheet" href="./css/output.css">
 </head>
-<body class="h-full flex items-center justify-center bg-zinc-950 overflow-hidden font-mono text-zinc-900">
+<body class="h-full flex items-center justify-center bg-slate-900 overflow-hidden font-sans text-slate-900 select-none">
 
   <!-- MAIN KIOSK HARDWARE CHASSIS (PORTRAIT KIOSK TERMINAL) -->
-  <div id="kiosk-chassis" class="w-full h-full max-w-[640px] mx-auto bg-zinc-100 relative overflow-hidden flex flex-col border-x-4 border-zinc-800 shadow-2xl select-none">
+  <div id="kiosk-chassis" class="w-full h-full max-w-[640px] mx-auto bg-slate-50 relative overflow-hidden flex flex-col border-x-4 border-slate-800 shadow-2xl select-none">
 
     <!-- ============================================================= -->
     <!-- SCREEN 1: POSTER WELCOME SCREEN ("Tap the Screen & Make your Order") -->
     <!-- ============================================================= -->
-    <div id="screen-welcome" class="kiosk-screen active p-8 flex flex-col justify-between cursor-pointer select-none">
-      <!-- Clean Minimal Header (No SQL indicator) -->
-      <div class="border-b-2 border-zinc-900 pb-4 text-center">
-        <div class="text-xs font-bold uppercase tracking-widest text-zinc-500">SYSTEM PROTOTYPE</div>
-        <div class="text-2xl font-black tracking-tight">SELF-SERVICE TERMINAL</div>
+    <div id="screen-welcome" class="kiosk-screen active p-6 flex flex-col justify-between cursor-pointer select-none bg-gradient-to-b from-sky-50 via-white to-amber-50/40">
+      <!-- Tropical Resort Header -->
+      <div class="border-b-2 border-sky-200 pb-4 text-center">
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-900 rounded-full text-xs font-black uppercase tracking-widest mb-1 shadow-xs">
+          <span>☀️</span> 3L's BEACH RESORT <span>🌴</span>
+        </div>
+        <div class="text-2xl font-black tracking-tight text-sky-900">SELF-SERVICE ORDERING TERMINAL</div>
       </div>
 
-      <!-- Center Poster Box -->
-      <div class="my-auto flex flex-col items-center text-center p-12 border-4 border-dashed border-zinc-400 bg-white w-full shadow-lg hover:border-zinc-900 transition-colors">
-        <div class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">[ TOUCH TERMINAL ]</div>
-        <h1 class="text-4xl font-black text-zinc-900 tracking-tight leading-snug mb-6">
+      <!-- Center Tropical Hero Poster Box -->
+      <div class="my-auto flex flex-col items-center text-center p-8 sm:p-10 border-4 border-amber-400 bg-white/95 rounded-3xl shadow-xl hover:border-sky-500 transition-all duration-150 sun-glow">
+        <div class="w-16 h-16 rounded-2xl bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-2xl mb-4 text-amber-600 font-bold">
+          🍽️
+        </div>
+        <div class="text-xs font-black text-amber-600 uppercase tracking-widest mb-2">[ FAST-FOOD &amp; REFRESHMENTS ]</div>
+        <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-snug mb-6">
           Tap the Screen &amp; Make your Order
         </h1>
-        <div class="px-6 py-3 bg-zinc-900 text-white font-black text-xs tracking-widest border-2 border-zinc-900 uppercase">
+        <div class="px-8 py-4 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-black text-sm tracking-widest rounded-2xl border-2 border-sky-400 uppercase shadow-lg touch-press">
           [ TOUCH ANYWHERE TO BEGIN ]
         </div>
       </div>
 
-      <!-- Clean Minimal Footer -->
-      <div class="text-center text-xs text-zinc-500 border-t-2 border-zinc-900 pt-4 flex items-center justify-between">
-        <span>ORDER HERE • PAY AT CASHIER COUNTER</span>
-        <span>TOUCH TO START</span>
+      <!-- Tropical Footer -->
+      <div class="text-center text-xs font-bold text-slate-500 border-t-2 border-sky-200 pt-4 flex items-center justify-between">
+        <span class="text-sky-800">FRESH FOOD &amp; DRINKS • PAY AT CASHIER COUNTER</span>
+        <span class="text-amber-700">TOUCH TO START</span>
       </div>
     </div>
 
@@ -43,42 +48,45 @@
     <!-- ============================================================= -->
     <!-- SCREEN 2: DINING OPTION SELECTION (Dine-In or Take-Out)       -->
     <!-- ============================================================= -->
-    <div id="screen-dining" class="kiosk-screen hidden p-8 flex flex-col justify-between">
+    <div id="screen-dining" class="kiosk-screen hidden p-6 flex flex-col justify-between bg-gradient-to-b from-sky-50 via-white to-sky-50">
       <!-- Header -->
-      <div class="flex items-center justify-between border-b-2 border-zinc-900 pb-4">
-        <div class="text-lg font-black">[ STEP 1: DINING OPTION ]</div>
-        <button id="btn-dining-cancel" class="px-3 py-1.5 border-2 border-zinc-900 bg-white text-xs font-bold touch-press">
+      <div class="flex items-center justify-between border-b-2 border-sky-200 pb-4">
+        <div class="text-base font-black text-sky-900 uppercase tracking-wide flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
+          [ STEP 1: DINING OPTION ]
+        </div>
+        <button id="btn-dining-cancel" class="px-4 py-2 border-2 border-slate-300 bg-white text-xs font-black rounded-xl text-slate-700 hover:bg-slate-100 touch-press shadow-xs">
           &lt; CANCEL
         </button>
       </div>
 
       <!-- Center Options -->
       <div class="my-auto flex flex-col items-center">
-        <div class="text-2xl font-black text-center mb-8">WHERE WILL YOU BE EATING TODAY?</div>
+        <div class="text-2xl font-black text-center mb-8 text-slate-900">WHERE WILL YOU BE EATING TODAY?</div>
 
-        <div class="grid grid-cols-2 gap-6 w-full">
+        <div class="grid grid-cols-2 gap-5 w-full max-w-lg">
           <!-- DINE IN -->
-          <button id="opt-dine-in" class="p-8 border-4 border-zinc-900 bg-white hover:bg-zinc-100 active:bg-zinc-200 flex flex-col items-center text-center touch-press shadow-md transition-all">
-            <div class="w-16 h-16 border-2 border-zinc-900 flex items-center justify-center font-bold text-xl mb-4 bg-zinc-100">
-              [ 01 ]
+          <button id="opt-dine-in" class="p-6 border-3 border-sky-600 bg-white hover:bg-sky-50 active:bg-sky-100 rounded-3xl flex flex-col items-center text-center touch-press shadow-md transition-all group">
+            <div class="w-16 h-16 rounded-2xl border-2 border-sky-600 flex items-center justify-center font-black text-xl mb-4 bg-sky-100 text-sky-800 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+              01
             </div>
-            <div class="text-2xl font-black mb-2">DINE IN</div>
-            <div class="text-xs text-zinc-600 font-bold">EAT INSIDE RESTAURANT</div>
+            <div class="text-xl font-black text-slate-900 mb-1">DINE IN</div>
+            <div class="text-[11px] text-slate-600 font-bold uppercase">EAT AT RESORT TABLES / CABANAS</div>
           </button>
 
           <!-- TAKE OUT -->
-          <button id="opt-take-out" class="p-8 border-4 border-zinc-900 bg-white hover:bg-zinc-100 active:bg-zinc-200 flex flex-col items-center text-center touch-press shadow-md transition-all">
-            <div class="w-16 h-16 border-2 border-zinc-900 flex items-center justify-center font-bold text-xl mb-4 bg-zinc-100">
-              [ 02 ]
+          <button id="opt-take-out" class="p-6 border-3 border-amber-500 bg-white hover:bg-amber-50 active:bg-amber-100 rounded-3xl flex flex-col items-center text-center touch-press shadow-md transition-all group">
+            <div class="w-16 h-16 rounded-2xl border-2 border-amber-500 flex items-center justify-center font-black text-xl mb-4 bg-amber-100 text-amber-800 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+              02
             </div>
-            <div class="text-2xl font-black mb-2">TAKE OUT</div>
-            <div class="text-xs text-zinc-600 font-bold">PACK MEAL TO GO</div>
+            <div class="text-xl font-black text-slate-900 mb-1">TAKE OUT</div>
+            <div class="text-[11px] text-slate-600 font-bold uppercase">BEACHSIDE PACK / TO GO</div>
           </button>
         </div>
       </div>
 
-      <div class="text-center text-xs text-zinc-500">
-        Please tap an option to proceed to the menu
+      <div class="text-center text-xs font-bold text-slate-400">
+        Please tap an option to proceed to the menu catalog
       </div>
     </div>
 
@@ -86,36 +94,36 @@
     <!-- ============================================================= -->
     <!-- SCREEN 3: MENU & ORDERING CATALOG                             -->
     <!-- ============================================================= -->
-    <div id="screen-menu" class="kiosk-screen hidden flex flex-col">
+    <div id="screen-menu" class="kiosk-screen hidden flex flex-col bg-slate-100">
       <!-- TOP STATUS BAR -->
-      <header class="h-14 border-b-2 border-zinc-900 px-4 flex items-center justify-between bg-zinc-200 shrink-0">
+      <header class="h-14 bg-sky-800 text-white px-4 flex items-center justify-between border-b-2 border-sky-900 shrink-0 shadow-sm">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-black uppercase tracking-wider">ORDER:</span>
-          <span id="menu-order-num" class="px-2 py-0.5 bg-zinc-900 text-white text-xs font-bold font-mono">#---</span>
-          <span id="menu-dining-tag" class="px-2 py-0.5 border-2 border-zinc-900 text-[11px] font-bold bg-white">DINE IN</span>
+          <span class="text-xs font-black uppercase tracking-wider text-sky-200">ORDER:</span>
+          <span id="menu-order-num" class="px-2.5 py-0.5 bg-amber-400 text-slate-900 rounded-md text-xs font-black font-mono shadow-xs">#---</span>
+          <span id="menu-dining-tag" class="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-sky-700 border border-sky-500 text-white">DINE IN</span>
         </div>
 
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold text-zinc-600">ITEMS:</span>
-          <span id="header-items-count" class="px-2 py-0.5 bg-zinc-900 text-white text-xs font-bold font-mono">0</span>
+          <span class="text-xs font-bold text-sky-200">ITEMS:</span>
+          <span id="header-items-count" class="px-2.5 py-0.5 bg-sky-950 text-white rounded-md text-xs font-black font-mono">0</span>
         </div>
       </header>
 
       <!-- MAIN AREA: CATEGORY SIDEBAR + PRODUCT GRID -->
       <div class="flex-1 flex overflow-hidden">
         <!-- LEFT CATEGORY SIDEBAR -->
-        <aside class="w-28 shrink-0 border-r-2 border-zinc-900 bg-zinc-100 flex flex-col overflow-y-auto p-2 gap-2">
-          <div class="text-[10px] font-bold text-zinc-500 uppercase px-1">CATEGORIES</div>
-          <div id="category-button-container" class="flex flex-col gap-1.5">
+        <aside class="w-32 shrink-0 border-r-2 border-slate-200 bg-sky-50/70 flex flex-col overflow-y-auto p-2 gap-2">
+          <div class="text-[10px] font-black text-sky-800 uppercase px-1 tracking-wider">CATEGORIES</div>
+          <div id="category-button-container" class="flex flex-col gap-2">
             <!-- Rendered dynamically from SQLite -->
           </div>
         </aside>
 
         <!-- RIGHT PRODUCT GRID -->
-        <main class="flex-1 flex flex-col overflow-hidden bg-white">
-          <div class="p-3 border-b-2 border-zinc-200 flex items-center justify-between shrink-0">
-            <h2 id="current-category-label" class="text-sm font-black uppercase text-zinc-900">ALL ITEMS</h2>
-            <div class="text-[11px] text-zinc-500 font-bold">PRICES IN PHP (₱)</div>
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+          <div class="p-3 border-b border-slate-200 bg-white flex items-center justify-between shrink-0 shadow-xs">
+            <h2 id="current-category-label" class="text-xs font-black uppercase text-sky-900 tracking-wider">ALL ITEMS</h2>
+            <div class="text-[11px] text-slate-500 font-bold">PRICES IN PHP (₱)</div>
           </div>
 
           <!-- 3-COLUMN GRID -->
@@ -128,28 +136,28 @@
       <!-- =========================================================== -->
       <!-- BOTTOM EXPANDABLE ORDER SUMMARY TRAY                        -->
       <!-- =========================================================== -->
-      <div id="bottom-expandable-tray" class="border-t-4 border-zinc-900 bg-zinc-50 flex flex-col shrink-0 z-30 shadow-2xl">
+      <div id="bottom-expandable-tray" class="border-t-3 border-sky-400 bg-white flex flex-col shrink-0 z-30 shadow-tray">
         
         <!-- TRAY HANDLE BAR (Tap to Expand / Collapse Summary) -->
-        <div id="tray-handle-bar" class="h-11 px-3 bg-zinc-200 border-b border-zinc-300 flex items-center justify-between cursor-pointer select-none hover:bg-zinc-300 active:bg-zinc-400">
+        <div id="tray-handle-bar" class="h-12 px-4 bg-gradient-to-r from-sky-100 via-sky-50 to-amber-50 border-b border-sky-200 flex items-center justify-between cursor-pointer select-none hover:bg-sky-100 active:bg-sky-200">
           <div class="flex items-center gap-2">
-            <button id="btn-toggle-tray" class="px-3 py-1 border-2 border-zinc-900 bg-white text-[11px] font-black touch-press flex items-center gap-1.5">
-              <span id="tray-toggle-icon">▲</span>
+            <button id="btn-toggle-tray" class="px-3 py-1.5 rounded-xl border-2 border-sky-600 bg-white text-[11px] font-black text-sky-900 touch-press flex items-center gap-1.5 shadow-xs">
+              <span id="tray-toggle-icon" class="text-sky-600 font-black">▲</span>
               <span>SUMMARY (<span id="tray-summary-count">0</span>)</span>
             </button>
-            <span class="text-[10px] text-zinc-500 font-medium hidden sm:inline">[ Tap a line to customize recipe ]</span>
+            <span class="text-[10px] text-slate-500 font-bold hidden sm:inline">[ Tap a line to edit recipe ]</span>
           </div>
 
           <!-- Total Amount Display -->
-          <div class="text-xs font-black text-zinc-900 font-mono">
-            <span id="tray-quick-total">₱0.00</span>
+          <div class="text-xs font-black text-slate-900 font-mono">
+            <span id="tray-quick-total" class="text-sky-900 font-black text-sm">₱0.00</span>
           </div>
         </div>
 
         <!-- EXPANDABLE ORDER SUMMARY CONTENT -->
-        <div id="tray-content-body" class="hidden max-h-72 overflow-y-auto p-3 bg-white border-b-2 border-zinc-300 flex flex-col">
+        <div id="tray-content-body" class="hidden max-h-72 overflow-y-auto p-3 bg-white border-b-2 border-slate-200 flex flex-col">
           <div id="summary-items-list" class="flex flex-col gap-2">
-            <div class="text-center py-6 text-xs text-zinc-400 font-bold uppercase">
+            <div class="text-center py-6 text-xs text-slate-400 font-bold uppercase">
               [ NO ITEMS ADDED YET - TAP ANY ITEM ABOVE ]
             </div>
           </div>
@@ -158,24 +166,24 @@
       </div>
 
       <!-- BOTTOM FIXED FOOTER (START OVER | TOTALS | CONFIRM ORDER) -->
-      <footer class="h-16 border-t-2 border-zinc-900 bg-zinc-100 px-4 flex items-center justify-between shrink-0 z-40">
+      <footer class="h-18 border-t-2 border-slate-300 bg-white px-4 flex items-center justify-between shrink-0 z-40 shadow-lg">
         <!-- Start Over -->
-        <button id="btn-menu-back" class="px-4 py-2.5 border-2 border-zinc-900 bg-white active:bg-zinc-200 text-xs font-black touch-press">
+        <button id="btn-menu-back" class="px-3.5 py-2.5 border-2 border-slate-300 rounded-xl bg-slate-50 active:bg-slate-200 text-xs font-black text-slate-700 touch-press shadow-xs">
           &lt; START OVER
         </button>
 
         <!-- Totals Snapshot -->
         <div class="text-right">
-          <div class="text-[9px] text-zinc-500 font-bold">
-            SUB: <span id="total-subtotal" class="font-bold text-zinc-800">₱0.00</span> | VAT(12%): <span id="total-vat" class="font-bold text-zinc-800">₱0.00</span>
+          <div class="text-[10px] text-slate-500 font-bold">
+            SUB: <span id="total-subtotal" class="font-bold text-slate-800">₱0.00</span> | VAT(12%): <span id="total-vat" class="font-bold text-slate-800">₱0.00</span>
           </div>
-          <div class="text-lg font-black text-zinc-900 tracking-tight leading-none mt-0.5 font-mono">
-            TOTAL: <span id="total-grand">₱0.00</span>
+          <div class="text-lg font-black text-slate-900 tracking-tight leading-none mt-0.5 font-mono">
+            TOTAL: <span id="total-grand" class="text-sky-900">₱0.00</span>
           </div>
         </div>
 
         <!-- Confirm Order -> Prints Receipt for Counter Payment -->
-        <button id="btn-proceed-checkout" disabled class="px-6 py-3 bg-zinc-900 disabled:bg-zinc-400 text-white font-black text-xs tracking-wider border-2 border-zinc-900 touch-press transition-all">
+        <button id="btn-proceed-checkout" disabled class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-black text-xs tracking-wider rounded-2xl border-2 border-emerald-400 touch-press transition-all shadow-md">
           CONFIRM ORDER &gt;
         </button>
       </footer>
@@ -185,31 +193,31 @@
     <!-- ============================================================= -->
     <!-- MODAL: RECIPE CUSTOMIZATION (FOR NEW ITEMS OR EDITING SUMMARY)-->
     <!-- ============================================================= -->
-    <div id="modal-customization" class="hidden absolute inset-0 bg-zinc-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div class="bg-white border-4 border-zinc-900 w-full max-w-md flex flex-col max-h-[85%] shadow-2xl">
+    <div id="modal-customization" class="hidden absolute inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+      <div class="bg-white border-3 border-sky-600 rounded-3xl w-full max-w-md flex flex-col max-h-[85%] shadow-2xl overflow-hidden">
         <!-- Header -->
-        <div class="p-3.5 border-b-2 border-zinc-900 bg-zinc-100 flex items-center justify-between">
+        <div class="p-4 bg-sky-700 text-white flex items-center justify-between">
           <div>
-            <div id="cust-modal-badge" class="text-[9px] font-bold text-zinc-500 uppercase">CUSTOMIZE RECIPE</div>
-            <div id="cust-item-name" class="text-sm font-black uppercase">ITEM NAME</div>
+            <div id="cust-modal-badge" class="text-[10px] font-black text-amber-300 uppercase tracking-wider">CUSTOMIZE RECIPE</div>
+            <div id="cust-item-name" class="text-sm font-black uppercase tracking-wide">ITEM NAME</div>
           </div>
-          <div id="cust-unit-price" class="text-sm font-black px-2.5 py-1 bg-zinc-900 text-white font-mono">₱0.00</div>
+          <div id="cust-unit-price" class="text-sm font-black px-3 py-1 bg-amber-400 text-slate-900 rounded-xl font-mono shadow-xs">₱0.00</div>
         </div>
 
         <!-- Ingredients Checklist -->
-        <div class="p-3.5 flex-1 overflow-y-auto">
-          <div class="text-[11px] font-bold uppercase mb-2 text-zinc-500">INGREDIENTS &amp; ADD-ONS:</div>
-          <div id="cust-ingredients-list" class="flex flex-col gap-1.5">
+        <div class="p-4 flex-1 overflow-y-auto bg-slate-50">
+          <div class="text-[11px] font-black uppercase mb-2.5 text-slate-500 tracking-wider">INGREDIENTS &amp; ADD-ONS:</div>
+          <div id="cust-ingredients-list" class="flex flex-col gap-2">
             <!-- Dynamic checklist -->
           </div>
         </div>
 
         <!-- Action Buttons -->
-        <div class="p-3 border-t-2 border-zinc-900 bg-zinc-100 flex items-center justify-between">
-          <button id="cust-btn-cancel" class="px-4 py-2 border-2 border-zinc-900 bg-white font-bold text-xs touch-press">
+        <div class="p-3.5 border-t border-slate-200 bg-white flex items-center justify-between">
+          <button id="cust-btn-cancel" class="px-4 py-2.5 border-2 border-slate-300 rounded-xl bg-slate-50 font-bold text-xs text-slate-700 touch-press shadow-xs">
             CANCEL
           </button>
-          <button id="cust-btn-confirm" class="px-6 py-2 border-2 border-zinc-900 bg-zinc-900 text-white font-black text-xs touch-press uppercase tracking-wider">
+          <button id="cust-btn-confirm" class="px-6 py-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black text-xs touch-press uppercase tracking-wider shadow-md">
             ADD ORDER
           </button>
         </div>
@@ -220,25 +228,27 @@
     <!-- ============================================================= -->
     <!-- SCREEN 4: ORDER CONFIRMED (PAY AT CASHIER COUNTER WITH RECEIPT)-->
     <!-- ============================================================= -->
-    <div id="screen-confirmed" class="kiosk-screen hidden p-8 flex flex-col justify-between overflow-y-auto">
+    <div id="screen-confirmed" class="kiosk-screen hidden p-6 flex flex-col justify-between overflow-y-auto bg-gradient-to-b from-sky-50 via-white to-amber-50/40">
       <!-- Top header -->
-      <div class="border-b-2 border-zinc-900 pb-3 flex items-center justify-between">
-        <div class="text-xs font-black uppercase text-zinc-900">[ ORDER REGISTERED ]</div>
-        <div id="confirm-timestamp" class="text-xs font-mono text-zinc-500">2026-09-10 00:00:00</div>
+      <div class="border-b-2 border-sky-200 pb-3 flex items-center justify-between">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 border border-emerald-300 rounded-full text-emerald-800 text-xs font-black uppercase tracking-wider">
+          <span>✓</span> [ ORDER REGISTERED ]
+        </div>
+        <div id="confirm-timestamp" class="text-xs font-mono font-bold text-slate-500">2026-09-13 00:00:00</div>
       </div>
 
       <!-- Center Order Information & Counter Instruction -->
-      <div class="my-auto flex flex-col items-center text-center p-6 border-4 border-zinc-900 bg-white shadow-xl">
-        <div class="text-xs font-bold uppercase text-zinc-500 mb-1">YOUR ASSIGNED ORDER NUMBER:</div>
-        <div id="confirm-order-number" class="text-6xl font-black text-zinc-900 tracking-wider mb-2 font-mono">#045</div>
+      <div class="my-auto flex flex-col items-center text-center p-6 border-3 border-sky-500 bg-white rounded-3xl shadow-xl">
+        <div class="text-xs font-black uppercase text-slate-500 tracking-wider mb-1">YOUR ASSIGNED ORDER NUMBER:</div>
+        <div id="confirm-order-number" class="text-6xl font-black text-sky-900 tracking-wider mb-2 font-mono">#045</div>
         
-        <div class="mb-3">
-          <span id="confirm-dining-mode" class="px-4 py-1 bg-zinc-900 text-white text-xs font-black uppercase tracking-widest">DINE IN</span>
+        <div class="mb-4">
+          <span id="confirm-dining-mode" class="px-4 py-1 bg-amber-400 text-slate-900 rounded-full text-xs font-black uppercase tracking-widest shadow-xs">DINE IN</span>
         </div>
 
         <!-- Primary Fast-Food Instruction Banner -->
-        <div class="w-full p-4 bg-zinc-900 text-white text-center border-2 border-zinc-900 shadow-md mb-3">
-          <div class="text-[11px] font-black tracking-widest uppercase text-amber-400 mb-1">
+        <div class="w-full p-4 bg-sky-900 text-white text-center rounded-2xl border-2 border-amber-400 shadow-md mb-3">
+          <div class="text-[11px] font-black tracking-widest uppercase text-amber-300 mb-1">
             ▼ PLEASE TAKE YOUR PRINTED RECEIPT BELOW ▼
           </div>
           <div class="text-sm font-black tracking-tight uppercase leading-snug">
@@ -248,32 +258,32 @@
         </div>
 
         <!-- Cashier Scan Barcode -->
-        <div class="w-full p-3 bg-white border-2 border-zinc-900 flex flex-col items-center mb-3">
-          <div class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">CASHIER SCAN BARCODE</div>
+        <div class="w-full p-3 bg-slate-50 rounded-2xl border-2 border-slate-300 flex flex-col items-center mb-3">
+          <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">CASHIER SCAN BARCODE</div>
           <div id="barcode-container" class="flex items-center justify-center"></div>
-          <div id="barcode-label" class="text-[10px] font-mono tracking-widest mt-1 font-bold">ORD-0000-0000</div>
+          <div id="barcode-label" class="text-[10px] font-mono tracking-widest mt-1 font-black text-slate-800">ORD-0000-0000</div>
         </div>
 
-        <!-- Friendly Fast-Food Restaurant Notes & Reminders -->
-        <div class="w-full p-3 bg-zinc-100 border-2 border-dashed border-zinc-400 text-left text-xs flex flex-col gap-1.5">
-          <div class="font-black text-zinc-900 uppercase flex items-center gap-1.5">
-            <span>★</span> ENJOY YOUR MEAL!
+        <!-- Tropical Restaurant Notes & Reminders -->
+        <div class="w-full p-3.5 bg-amber-50/70 rounded-2xl border-2 border-amber-200 text-left text-xs flex flex-col gap-1.5">
+          <div class="font-black text-amber-900 uppercase flex items-center gap-1.5">
+            <span>☀️</span> ENJOY YOUR MEAL &amp; STAY AT 3L'S BEACH RESORT!
           </div>
-          <div class="text-zinc-600 text-[11px] leading-tight flex flex-col gap-1">
+          <div class="text-slate-600 text-[11px] leading-tight flex flex-col gap-1 font-medium">
             <div>• Present your printed receipt to the cashier counter to complete payment.</div>
-            <div>• Your meal will be prepared freshly once payment is confirmed.</div>
-            <div>• Please watch the pickup screen or listen for your order number.</div>
-            <div>• Keep your receipt as your official pickup stub.</div>
+            <div>• Your food and drinks will be prepared freshly once payment is confirmed.</div>
+            <div>• Please watch the pickup counter or listen for your order number.</div>
+            <div>• Keep your receipt as your official pickup claim stub.</div>
           </div>
         </div>
       </div>
 
       <!-- Bottom Actions With 5-Second Timer -->
-      <div class="flex flex-col gap-2 pt-4 border-t-2 border-zinc-900 text-center">
-        <div id="confirm-timer" class="text-xs font-mono text-zinc-500 font-bold">
+      <div class="flex flex-col gap-2 pt-4 border-t-2 border-sky-200 text-center">
+        <div id="confirm-timer" class="text-xs font-mono text-slate-500 font-bold">
           Returning to start in 5s...
         </div>
-        <button id="btn-finish-order" class="w-full py-4 bg-zinc-900 text-white font-black text-sm tracking-wider border-2 border-zinc-900 touch-press">
+        <button id="btn-finish-order" class="w-full py-4 bg-sky-800 hover:bg-sky-700 active:bg-sky-900 text-white font-black text-sm tracking-wider rounded-2xl border-2 border-sky-600 touch-press shadow-md">
           [ DONE / NEXT CUSTOMER ]
         </button>
       </div>
@@ -284,3 +294,4 @@
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>
+

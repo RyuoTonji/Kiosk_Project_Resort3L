@@ -3,20 +3,21 @@
 @tailwind utilities;
 
 @layer base {
-  /* Wireframe / Prototype Kiosk Environment */
+  /* Embedded Kiosk Touchscreen Environment */
   html, body {
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
+    -webkit-user-drag: none;
     touch-action: manipulation;
     overscroll-behavior: none;
     height: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #18181B; /* Dark neutral chassis */
-    color: #09090B;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background-color: #0F172A; /* Deep slate chassis border */
+    color: #0F172A;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   /* Monospace Receipt Styles */
@@ -26,25 +27,28 @@
 
   /* Touch scrolling */
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #A1A1AA;
-    border-radius: 4px;
+    background: #94A3B8;
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #71717A;
+    background: #64748B;
   }
 }
 
 @layer utilities {
+  .touch-press {
+    transition: transform 0.075s ease-out, filter 0.075s ease-out;
+  }
   .touch-press:active {
     transform: scale(0.97);
-    transition: transform 0.06s ease-out;
+    filter: brightness(0.95);
   }
 
   .kiosk-screen {
@@ -52,14 +56,14 @@
     inset: 0;
     display: flex;
     flex-direction: column;
-    background-color: #FAFAFA;
-    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    background-color: #F8FAFC;
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .kiosk-screen.hidden {
     opacity: 0;
     pointer-events: none;
-    transform: scale(0.98);
+    transform: scale(0.985);
   }
 
   .kiosk-screen.active {
@@ -68,16 +72,14 @@
     transform: scale(1);
   }
 
-  .wireframe-border {
-    border: 2px solid #27272A;
+  /* Tropical Sun Glow Effect */
+  .sun-glow {
+    box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.3);
   }
 
-  .wireframe-dashed {
-    border: 2px dashed #71717A;
-  }
-
-  .receipt-zigzag {
-    background: radial-gradient(circle, transparent, transparent 50%, #ffffff 50%, #ffffff 100%);
-    background-size: 16px 16px;
+  /* Ocean Depth Header Shadow */
+  .ocean-header-shadow {
+    box-shadow: 0 4px 15px -3px rgba(2, 132, 199, 0.25);
   }
 }
+

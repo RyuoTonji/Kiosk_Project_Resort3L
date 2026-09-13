@@ -152,10 +152,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     allCats.forEach((cat) => {
       const btn = document.createElement('button');
       const isActive = cat === activeCategory;
-      btn.className = `w-full py-2.5 px-2 text-left text-[11px] font-bold border-2 border-zinc-900 uppercase touch-press transition-all ${
-        isActive ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900 hover:bg-zinc-100'
+      btn.className = `w-full py-3 px-3 text-left text-[11px] font-black rounded-2xl border-2 uppercase touch-press transition-all shadow-xs ${
+        isActive
+          ? 'bg-sky-700 text-white border-sky-800 shadow-md ring-2 ring-amber-400'
+          : 'bg-white text-slate-700 border-slate-200 hover:bg-sky-50 hover:border-sky-300'
       }`;
-      btn.textContent = `[ ${cat.toUpperCase()} ]`;
+      btn.textContent = cat === 'all' ? '🌴 ALL ITEMS' : `• ${cat.toUpperCase()}`;
       btn.addEventListener('click', () => {
         activeCategory = cat;
         if (currentCategoryLabel) currentCategoryLabel.textContent = `${cat.toUpperCase()} ITEMS`;
@@ -177,12 +179,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     filtered.forEach((item) => {
       const card = document.createElement('div');
-      card.className = 'bg-zinc-50 border-2 border-zinc-900 p-2.5 flex flex-col justify-between shadow-xs hover:border-zinc-950 cursor-pointer touch-press transition-all group';
+      card.className = 'bg-white border-2 border-slate-200 hover:border-sky-400 rounded-3xl p-3 flex flex-col justify-between shadow-kiosk-card hover:shadow-lg cursor-pointer touch-press transition-all group';
 
       const imageBox = `
-        <div class="w-full aspect-square border-2 border-dashed border-zinc-400 bg-white flex flex-col items-center justify-center text-center p-2 mb-2 group-hover:border-zinc-900 transition-colors">
-          <span class="text-[10px] font-bold text-zinc-400 uppercase">[ ITEM PREVIEW ]</span>
-          <span class="text-[9px] font-mono text-zinc-300 mt-1">${item.category.toUpperCase()}</span>
+        <div class="w-full aspect-square rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-amber-50/50 flex flex-col items-center justify-center text-center p-2 mb-2.5 group-hover:border-sky-400 transition-colors">
+          <span class="text-2xl mb-1">🍽️</span>
+          <span class="text-[9px] font-black font-mono text-sky-700 uppercase bg-sky-100 px-2 py-0.5 rounded-full">${item.category.toUpperCase()}</span>
         </div>
       `;
 
@@ -190,11 +192,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         ${imageBox}
         <div class="flex-1 flex flex-col justify-between">
           <div>
-            <div class="text-[11px] font-black uppercase text-zinc-900 line-clamp-2 leading-tight">${item.name}</div>
-            <div class="text-xs font-black text-zinc-900 mt-1 font-mono">${formatCentavos(item.price)}</div>
+            <div class="text-xs font-black uppercase text-slate-900 line-clamp-2 leading-snug">${item.name}</div>
+            <div class="inline-block mt-1.5 px-2 py-0.5 bg-amber-400 text-slate-900 rounded-lg text-xs font-black font-mono shadow-xs">
+              ${formatCentavos(item.price)}
+            </div>
           </div>
-          <div class="mt-2.5 pt-2 border-t border-zinc-200">
-            <button class="btn-card-add w-full py-2 bg-zinc-900 active:bg-zinc-700 text-white text-[11px] font-black touch-press uppercase tracking-wider text-center">
+          <div class="mt-3 pt-2 border-t border-slate-100">
+            <button class="btn-card-add w-full py-2.5 bg-sky-700 hover:bg-sky-600 active:bg-sky-800 text-white text-xs font-black rounded-xl touch-press uppercase tracking-wider text-center shadow-xs">
               + ADD
             </button>
           </div>
@@ -266,16 +270,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       ingredients.forEach((ing) => {
         const label = document.createElement('label');
-        label.className = 'flex items-center justify-between p-2.5 border-2 border-zinc-200 bg-zinc-50 hover:bg-zinc-100 cursor-pointer select-none';
+        label.className = 'flex items-center justify-between p-3 border-2 border-slate-200 bg-white hover:bg-sky-50 active:bg-sky-100 rounded-2xl cursor-pointer select-none touch-press transition-colors shadow-2xs';
 
         const priceBadge = ing.price_delta > 0
-          ? `<span class="text-xs font-bold font-mono text-zinc-900">+${formatCentavos(ing.price_delta)}</span>`
-          : (ing.required ? '<span class="text-[10px] font-bold uppercase text-zinc-400">[ REQUIRED ]</span>' : '');
+          ? `<span class="text-xs font-black font-mono text-sky-900 bg-amber-200 border border-amber-300 px-2 py-0.5 rounded-lg">+${formatCentavos(ing.price_delta)}</span>`
+          : (ing.required ? '<span class="text-[10px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">[ REQUIRED ]</span>' : '');
 
         label.innerHTML = `
-          <div class="flex items-center gap-2.5">
-            <input type="checkbox" ${activeCustomizingRecipe[ing.id] ? 'checked' : ''} ${ing.required ? 'disabled' : ''} class="w-4 h-4 border-2 border-zinc-900 rounded-none cursor-pointer">
-            <span class="text-xs font-bold uppercase text-zinc-800">${ing.name}</span>
+          <div class="flex items-center gap-3">
+            <input type="checkbox" ${activeCustomizingRecipe[ing.id] ? 'checked' : ''} ${ing.required ? 'disabled' : ''} class="w-5 h-5 border-2 border-sky-600 rounded-lg text-sky-600 focus:ring-0 cursor-pointer accent-sky-600">
+            <span class="text-xs font-black uppercase text-slate-800">${ing.name}</span>
           </div>
           ${priceBadge}
         `;
@@ -423,7 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (cart.length === 0) {
       summaryItemsList.innerHTML = `
-        <div class="text-center py-6 text-xs text-zinc-400 font-bold uppercase">
+        <div class="text-center py-6 text-xs text-slate-400 font-bold uppercase">
           [ NO ITEMS ADDED YET - TAP ANY ITEM ABOVE ]
         </div>
       `;
@@ -432,34 +436,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     cart.forEach((cartItem, idx) => {
       const row = document.createElement('div');
-      row.className = 'p-2.5 border-2 border-zinc-900 bg-zinc-50 hover:bg-zinc-100 flex items-center justify-between text-xs cursor-pointer select-none transition-colors group';
+      row.className = 'p-3 border-2 border-slate-200 bg-white hover:border-sky-300 rounded-2xl flex items-center justify-between text-xs cursor-pointer select-none transition-colors shadow-2xs group';
 
       const modHtml = cartItem.modifiersSummary && cartItem.modifiersSummary.length > 0
-        ? `<div class="text-[10px] text-zinc-500 mt-0.5 font-mono">${cartItem.modifiersSummary.join(', ')}</div>`
+        ? `<div class="text-[10px] text-sky-800 mt-0.5 font-bold font-mono">${cartItem.modifiersSummary.join(', ')}</div>`
         : '';
 
       row.innerHTML = `
         <div class="flex-1 pr-3 row-clickable">
-          <div class="font-black text-zinc-900 uppercase flex items-center gap-1.5">
+          <div class="font-black text-slate-900 uppercase flex items-center gap-1.5">
             <span>${cartItem.name}</span>
-            <span class="text-[9px] font-normal text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity underline">
-              [ Tap line to customize ]
+            <span class="text-[10px] font-bold text-sky-600 opacity-0 group-hover:opacity-100 transition-opacity underline">
+              [ Tap line to edit ]
             </span>
           </div>
-          <div class="text-[10px] font-mono text-zinc-600">${formatCentavos(cartItem.unitPrice)} each</div>
+          <div class="text-[10px] font-mono font-bold text-slate-500">${formatCentavos(cartItem.unitPrice)} each</div>
           ${modHtml}
         </div>
 
-        <div class="flex items-center gap-2.5 shrink-0" onclick="event.stopPropagation()">
-          <div class="flex items-center border-2 border-zinc-900 bg-white">
-            <button class="btn-dec px-2.5 py-1 font-black touch-press hover:bg-zinc-100">-</button>
-            <span class="px-2 font-bold font-mono text-xs">${cartItem.quantity}</span>
-            <button class="btn-inc px-2.5 py-1 font-black touch-press hover:bg-zinc-100">+</button>
+        <div class="flex items-center gap-3 shrink-0" onclick="event.stopPropagation()">
+          <div class="flex items-center border-2 border-slate-300 rounded-xl bg-slate-50 overflow-hidden shadow-2xs">
+            <button class="btn-dec px-3 py-1.5 font-black text-slate-800 touch-press hover:bg-slate-200 active:bg-slate-300 text-xs">-</button>
+            <span class="px-2.5 font-black font-mono text-xs text-slate-900">${cartItem.quantity}</span>
+            <button class="btn-inc px-3 py-1.5 font-black text-slate-800 touch-press hover:bg-slate-200 active:bg-slate-300 text-xs">+</button>
           </div>
-          <div class="w-16 text-right font-black font-mono text-xs">
+          <div class="w-16 text-right font-black font-mono text-xs text-sky-900">
             ${formatCentavos(cartItem.unitPrice * cartItem.quantity)}
           </div>
-          <button class="btn-del text-red-600 font-bold px-1.5 hover:underline touch-press">[X]</button>
+          <button class="btn-del text-red-500 hover:text-red-700 font-bold px-2 py-1 hover:bg-red-50 rounded-lg touch-press">[X]</button>
         </div>
       `;
 
