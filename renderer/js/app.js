@@ -1,442 +1,639 @@
-/**
- * 3L's Beach Resort — Main Kiosk Application Controller
- * ES Module Architecture for fast touchscreen interaction.
- */
+// Production-Grade Offline Kiosk Controller (Poster Screen, Counter Payment & 5s Auto-Close Receipt)
 
-import { store } from './state.js';
-import { switchScreen } from './screens.js';
-import { RESORT_CATEGORIES, RESORT_CATALOG, RESORT_SERVICES } from './catalog.js';
-import { formatCentavos, formatOrderNumber, formatDateTime } from './formatters.js';
-import { calculateCartTotals } from './cart.js';
+// Pure SVG Barcode Generator Utility
+function generateBarcodeSVG(codeText, width = 260, height = 65) {
+  let pattern = '10100110110'; // Guard bars
+  for (let i = 0; i < codeText.length; i++) {
+    const charCode = codeText.charCodeAt(i);
+    const bits = (charCode * 31 % 127).toString(2).padStart(7, '0');
+    pattern += bits + '0';
+  }
+  pattern += '11010010101'; // Stop guard
+
+  const barCount = pattern.length;
+  const barWidth = width / barCount;
+
+  let rects = '';
+  for (let i = 0; i < pattern.length; i++) {
+    if (pattern[i] === '1') {
+      const x = (i * barWidth).toFixed(2);
+      rects += `<rect x="${x}" y="0" width="${barWidth.toFixed(2)}" height="${height}" fill="#000000" />`;
+    }
+  }
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" class="block">
+      <rect width="${width}" height="${height}" fill="#ffffff"/>
+      ${rects}
+    </svg>
+  `;
+}
+
+// Format integer centavos to Philippine Peso (e.g. 8900 -> ₱89.00)
+function formatCentavos(centavos) {
+  return '₱' + (centavos / 100).toFixed(2);
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log("[3L's Beach Resort] Initializing touchscreen kiosk application shell...");
+  console.log('[Kiosk] Initializing poster welcome and cashier counter payment kiosk flow...');
 
-  // --- CACHED DOM ELEMENTS ---
+  // --- STATE ---
+  let diningMode = 'dine-in';
+  let activeCategory = 'all';
+  let categories = [];
+  let menuItems = [];
+  let cart = []; // Array of ordered items
+  let nextOrderNumber = 42;
+  let isTrayExpanded = false;
+
+  // Customizer modal state
+  let modalMode = 'add'; // 'add' | 'edit'
+  let activeEditingIndex = -1;
+  let activeCustomizingItem = null;
+  let activeCustomizingRecipe = {};
+
+  let currentOrderResult = null;
+  let lastReceiptText = '';
+  let receiptTimerInterval = null;
+
+  // --- UI DOM ELEMENTS ---
   const screenWelcome = document.getElementById('screen-welcome');
-  const btnWelcomeStart = document.getElementById('btn-welcome-start');
-  const btnServiceBack = document.getElementById('btn-service-back');
-  const serviceFoodDrinks = document.getElementById('service-food-drinks');
-  const serviceActivities = document.getElementById('service-resort-activities');
-  const headerServiceTag = document.getElementById('header-service-tag');
-  const catalogOrderBadge = document.getElementById('catalog-order-badge');
-  const langEn = document.getElementById('lang-en');
-  const langFil = document.getElementById('lang-fil');
+  const screenDining = document.getElementById('screen-dining');
+  const screenMenu = document.getElementById('screen-menu');
+  const screenConfirmed = document.getElementById('screen-confirmed');
 
-  const categoryContainer = document.getElementById('category-container');
-  const categoryActiveIcon = document.getElementById('category-active-icon');
-  const categoryActiveTitle = document.getElementById('category-active-title');
-  const productGrid = document.getElementById('product-grid');
+  const optDineIn = document.getElementById('opt-dine-in');
+  const optTakeOut = document.getElementById('opt-take-out');
+  const btnDiningCancel = document.getElementById('btn-dining-cancel');
 
-  const cartFooterPreview = document.getElementById('cart-footer-preview');
-  const cartTrayDrawer = document.getElementById('cart-tray-drawer');
-  const cartDrawerItems = document.getElementById('cart-drawer-items');
-  const footerItemBadge = document.getElementById('footer-item-badge');
-  const footerCartSummaryText = document.getElementById('footer-cart-summary-text');
-  const footerCartTotal = document.getElementById('footer-cart-total');
-  const btnCheckout = document.getElementById('btn-checkout');
-  const btnClearCart = document.getElementById('btn-clear-cart');
+  const menuOrderNum = document.getElementById('menu-order-num');
+  const menuDiningTag = document.getElementById('menu-dining-tag');
+  const headerItemsCount = document.getElementById('header-items-count');
+  const currentCategoryLabel = document.getElementById('current-category-label');
+  const categoryButtonContainer = document.getElementById('category-button-container');
+  const menuProductGrid = document.getElementById('menu-product-grid');
 
+  // Bottom Tray Elements
+  const trayHandleBar = document.getElementById('tray-handle-bar');
+  const btnToggleTray = document.getElementById('btn-toggle-tray');
+  const trayToggleIcon = document.getElementById('tray-toggle-icon');
+  const traySummaryCount = document.getElementById('tray-summary-count');
+  const trayQuickTotal = document.getElementById('tray-quick-total');
+  const trayContentBody = document.getElementById('tray-content-body');
+  const summaryItemsList = document.getElementById('summary-items-list');
+
+  // Bottom Fixed Footer
+  const btnMenuBack = document.getElementById('btn-menu-back');
+  const totalSubtotal = document.getElementById('total-subtotal');
+  const totalVat = document.getElementById('total-vat');
+  const totalGrand = document.getElementById('total-grand');
+  const btnProceedCheckout = document.getElementById('btn-proceed-checkout');
+
+  // Customization Modal
   const modalCustomization = document.getElementById('modal-customization');
-  const modalItemEmoji = document.getElementById('modal-item-emoji');
-  const modalItemName = document.getElementById('modal-item-name');
-  const modalItemPrice = document.getElementById('modal-item-price');
-  const modalModifiersList = document.getElementById('modal-modifiers-list');
-  const modalBtnCancel = document.getElementById('modal-btn-cancel');
-  const modalBtnApply = document.getElementById('modal-btn-apply');
+  const custModalBadge = document.getElementById('cust-modal-badge');
+  const custItemName = document.getElementById('cust-item-name');
+  const custUnitPrice = document.getElementById('cust-unit-price');
+  const custIngredientsList = document.getElementById('cust-ingredients-list');
+  const custBtnCancel = document.getElementById('cust-btn-cancel');
+  const custBtnConfirm = document.getElementById('cust-btn-confirm');
 
-  const confirmedTimestamp = document.getElementById('confirmed-timestamp');
-  const confirmedOrderNumber = document.getElementById('confirmed-order-number');
-  const confirmedServiceBadge = document.getElementById('confirmed-service-badge');
-  const confirmedTimer = document.getElementById('confirmed-timer');
+  // Confirmation Screen
+  const confirmTimestamp = document.getElementById('confirm-timestamp');
+  const confirmOrderNumber = document.getElementById('confirm-order-number');
+  const confirmDiningMode = document.getElementById('confirm-dining-mode');
+  const barcodeContainer = document.getElementById('barcode-container');
+  const barcodeLabel = document.getElementById('barcode-label');
+  const confirmTimer = document.getElementById('confirm-timer');
   const btnFinishOrder = document.getElementById('btn-finish-order');
 
-  let activeCustomizingItem = null;
-  let activeModifierState = [];
-  let confirmedTimerInterval = null;
-
-  // --- INITIALIZE ORDER SEQUENCE FROM ELECTRON IPC OR LOCAL ---
-  async function initOrderSequence() {
-    try {
-      if (window.kioskAPI && window.kioskAPI.getNextOrderNumber) {
-        const num = await window.kioskAPI.getNextOrderNumber();
-        store.setOrderNumber(num);
-      }
-    } catch (err) {
-      console.warn('[Kiosk] Local fallback sequence used:', err);
-    }
-  }
-
-  // --- RENDER FUNCTIONS ---
-  function renderHeader() {
-    const { orderNumber, serviceType, language } = store.getState();
-    if (catalogOrderBadge) catalogOrderBadge.textContent = `#${String(orderNumber).padStart(3, '0')}`;
-    if (headerServiceTag) {
-      const s = RESORT_SERVICES.find((srv) => srv.id === serviceType);
-      headerServiceTag.textContent = s ? s.title : 'Food & Drinks';
-    }
-
-    if (langEn && langFil) {
-      if (language === 'EN') {
-        langEn.className = 'join-item px-3 py-1 text-xs font-black rounded-lg bg-white text-secondary shadow-xs';
-        langFil.className = 'join-item px-3 py-1 text-xs font-black rounded-lg text-white/80 hover:text-white';
-      } else {
-        langFil.className = 'join-item px-3 py-1 text-xs font-black rounded-lg bg-white text-secondary shadow-xs';
-        langEn.className = 'join-item px-3 py-1 text-xs font-black rounded-lg text-white/80 hover:text-white';
-      }
-    }
-  }
-
-  function renderCategories() {
-    if (!categoryContainer) return;
-    categoryContainer.innerHTML = '';
-    const { activeCategory } = store.getState();
-
-    RESORT_CATEGORIES.forEach((cat) => {
-      const isActive = cat.id === activeCategory;
-      const btn = document.createElement('button');
-      btn.className = `w-full p-2.5 rounded-2xl flex flex-col items-center justify-center text-center touch-press transition-all border-2 ${
-        isActive
-          ? 'bg-secondary text-white border-secondary shadow-md font-black'
-          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-bold'
-      }`;
-      btn.innerHTML = `
-        <span class="text-2xl mb-1">${cat.icon}</span>
-        <span class="text-[11px] leading-tight">${cat.label}</span>
-      `;
-      btn.addEventListener('click', () => {
-        store.setCategory(cat.id);
-      });
-      categoryContainer.appendChild(btn);
+  // --- SCREEN SWITCHING ---
+  function showScreen(screen) {
+    [screenWelcome, screenDining, screenMenu, screenConfirmed].forEach((s) => {
+      s.classList.add('hidden');
+      s.classList.remove('active');
     });
+    screen.classList.remove('hidden');
+    screen.classList.add('active');
+  }
 
-    const currentCat = RESORT_CATEGORIES.find((c) => c.id === activeCategory);
-    if (currentCat) {
-      if (categoryActiveIcon) categoryActiveIcon.textContent = currentCat.icon;
-      if (categoryActiveTitle) categoryActiveTitle.textContent = currentCat.label;
+  // --- INITIALIZE DATA FROM SQLITE ---
+  async function loadInitialData() {
+    if (!window.kioskAPI) {
+      console.error('[Kiosk] window.kioskAPI missing!');
+      return;
+    }
+
+    try {
+      // 1. Next Order Sequence
+      nextOrderNumber = await window.kioskAPI.getNextOrderNumber();
+      const formattedNum = '#' + String(nextOrderNumber).padStart(3, '0');
+      if (menuOrderNum) menuOrderNum.textContent = formattedNum;
+
+      // 2. Categories
+      categories = await window.kioskAPI.getCategories();
+      renderCategories();
+
+      // 3. Menu Items
+      menuItems = await window.kioskAPI.getMenuItems();
+      renderMenuItems();
+    } catch (err) {
+      console.error('[Kiosk] SQLite Load Error:', err);
     }
   }
 
-  function renderProductGrid() {
-    if (!productGrid) return;
-    productGrid.innerHTML = '';
-    const { activeCategory } = store.getState();
+  // --- RENDER CATEGORIES SIDEBAR ---
+  function renderCategories() {
+    if (!categoryButtonContainer) return;
+    categoryButtonContainer.innerHTML = '';
 
-    const items = RESORT_CATALOG.filter((i) => i.category === activeCategory);
+    const allCats = ['all', ...categories];
 
-    items.forEach((item) => {
+    allCats.forEach((cat) => {
+      const btn = document.createElement('button');
+      const isActive = cat === activeCategory;
+      btn.className = `w-full py-2.5 px-2 text-left text-[11px] font-bold border-2 border-zinc-900 uppercase touch-press transition-all ${
+        isActive ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900 hover:bg-zinc-100'
+      }`;
+      btn.textContent = `[ ${cat.toUpperCase()} ]`;
+      btn.addEventListener('click', () => {
+        activeCategory = cat;
+        if (currentCategoryLabel) currentCategoryLabel.textContent = `${cat.toUpperCase()} ITEMS`;
+        renderCategories();
+        renderMenuItems();
+      });
+      categoryButtonContainer.appendChild(btn);
+    });
+  }
+
+  // --- RENDER MENU PRODUCT GRID (CLICK ENTIRE CARD OR ADD BUTTON TO CUSTOMIZE) ---
+  function renderMenuItems() {
+    if (!menuProductGrid) return;
+    menuProductGrid.innerHTML = '';
+
+    const filtered = activeCategory === 'all'
+      ? menuItems
+      : menuItems.filter((i) => i.category.toLowerCase() === activeCategory.toLowerCase());
+
+    filtered.forEach((item) => {
       const card = document.createElement('div');
-      card.className =
-        'bg-white rounded-2xl border-2 border-slate-200/80 p-3 flex flex-col justify-between shadow-xs hover:border-secondary/40 transition-all touch-press group';
+      card.className = 'bg-zinc-50 border-2 border-zinc-900 p-2.5 flex flex-col justify-between shadow-xs hover:border-zinc-950 cursor-pointer touch-press transition-all group';
+
+      const imageBox = `
+        <div class="w-full aspect-square border-2 border-dashed border-zinc-400 bg-white flex flex-col items-center justify-center text-center p-2 mb-2 group-hover:border-zinc-900 transition-colors">
+          <span class="text-[10px] font-bold text-zinc-400 uppercase">[ ITEM PREVIEW ]</span>
+          <span class="text-[9px] font-mono text-zinc-300 mt-1">${item.category.toUpperCase()}</span>
+        </div>
+      `;
 
       card.innerHTML = `
-        <div>
-          <div class="w-full aspect-square rounded-xl bg-gradient-to-tr from-sky-50 to-amber-50 flex items-center justify-center text-4xl mb-2.5 border border-slate-100 group-hover:scale-105 transition-transform">
-            ${item.emoji}
+        ${imageBox}
+        <div class="flex-1 flex flex-col justify-between">
+          <div>
+            <div class="text-[11px] font-black uppercase text-zinc-900 line-clamp-2 leading-tight">${item.name}</div>
+            <div class="text-xs font-black text-zinc-900 mt-1 font-mono">${formatCentavos(item.price)}</div>
           </div>
-          <h3 class="text-xs font-black text-neutral uppercase line-clamp-2 leading-tight">${item.name}</h3>
-          <p class="text-[10px] text-slate-500 line-clamp-2 mt-0.5">${item.description}</p>
-        </div>
-
-        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5">
-          <span class="text-sm font-black text-amber-600 font-mono tracking-tight">
-            ${formatCentavos(item.price)}
-          </span>
-          <div class="flex items-center gap-1">
-            ${
-              item.customizable
-                ? `<button data-action="customize" class="px-2 py-1.5 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 text-[10px] font-black text-slate-700 touch-press uppercase">
-                    OPT
-                   </button>`
-                : ''
-            }
-            <button data-action="add" class="w-8 h-8 rounded-xl bg-primary text-primary-content font-black text-sm flex items-center justify-center shadow-xs touch-press hover:bg-amber-400">
-              +
+          <div class="mt-2.5 pt-2 border-t border-zinc-200">
+            <button class="btn-card-add w-full py-2 bg-zinc-900 active:bg-zinc-700 text-white text-[11px] font-black touch-press uppercase tracking-wider text-center">
+              + ADD
             </button>
           </div>
         </div>
       `;
 
-      // Event listeners for Card actions
-      const btnAdd = card.querySelector('[data-action="add"]');
-      if (btnAdd) {
-        btnAdd.addEventListener('click', (e) => {
-          e.stopPropagation();
-          store.addToCart(item);
-        });
-      }
-
-      const btnCustomize = card.querySelector('[data-action="customize"]');
-      if (btnCustomize) {
-        btnCustomize.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openCustomizationModal(item);
-        });
-      }
-
-      // Card tap opens customize if customizable, else adds directly
+      // Clicking anywhere on the entire card or the + ADD button opens the customization modal!
       card.addEventListener('click', () => {
-        if (item.customizable) {
-          openCustomizationModal(item);
-        } else {
-          store.addToCart(item);
+        openCustomizationModal(item, 'add');
+      });
+
+      menuProductGrid.appendChild(card);
+    });
+  }
+
+  // --- OPEN CUSTOMIZATION MODAL (FOR NEW ITEM OR EDITING AN EXISTING LINE) ---
+  function openCustomizationModal(item, mode = 'add', editIndex = -1) {
+    modalMode = mode;
+    activeEditingIndex = editIndex;
+    activeCustomizingItem = item;
+
+    let ingredients = [];
+    try {
+      ingredients = JSON.parse(item.base_ingredients_json);
+    } catch (e) {
+      console.error(e);
+    }
+
+    activeCustomizingRecipe = {};
+    if (mode === 'edit' && editIndex >= 0 && cart[editIndex]) {
+      activeCustomizingRecipe = { ...cart[editIndex].recipe };
+    } else {
+      ingredients.forEach((ing) => {
+        activeCustomizingRecipe[ing.id] = ing.included;
+      });
+    }
+
+    if (custItemName) custItemName.textContent = item.name.toUpperCase();
+    if (custModalBadge) {
+      custModalBadge.textContent = mode === 'edit' ? '[ EDIT ORDERED RECIPE ]' : '[ CUSTOMIZE RECIPE ]';
+    }
+    if (custBtnConfirm) {
+      custBtnConfirm.textContent = mode === 'edit' ? 'UPDATE ORDER' : 'ADD ORDER';
+    }
+
+    function calculateModalPrice() {
+      let modTotal = 0;
+      const modSummary = [];
+
+      ingredients.forEach((ing) => {
+        const isChecked = !!activeCustomizingRecipe[ing.id];
+        if (ing.price_delta > 0 && isChecked) {
+          modTotal += ing.price_delta;
+          modSummary.push(`+ ${ing.name} (${formatCentavos(ing.price_delta)})`);
+        } else if (!ing.required && !isChecked && ing.included) {
+          modSummary.push(`No ${ing.name}`);
         }
       });
 
-      productGrid.appendChild(card);
+      const currentUnit = item.price + modTotal;
+      if (custUnitPrice) custUnitPrice.textContent = formatCentavos(currentUnit);
+
+      return { modTotal, currentUnit, modSummary };
+    }
+
+    // Render Checklist in Modal
+    if (custIngredientsList) {
+      custIngredientsList.innerHTML = '';
+
+      ingredients.forEach((ing) => {
+        const label = document.createElement('label');
+        label.className = 'flex items-center justify-between p-2.5 border-2 border-zinc-200 bg-zinc-50 hover:bg-zinc-100 cursor-pointer select-none';
+
+        const priceBadge = ing.price_delta > 0
+          ? `<span class="text-xs font-bold font-mono text-zinc-900">+${formatCentavos(ing.price_delta)}</span>`
+          : (ing.required ? '<span class="text-[10px] font-bold uppercase text-zinc-400">[ REQUIRED ]</span>' : '');
+
+        label.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <input type="checkbox" ${activeCustomizingRecipe[ing.id] ? 'checked' : ''} ${ing.required ? 'disabled' : ''} class="w-4 h-4 border-2 border-zinc-900 rounded-none cursor-pointer">
+            <span class="text-xs font-bold uppercase text-zinc-800">${ing.name}</span>
+          </div>
+          ${priceBadge}
+        `;
+
+        const checkbox = label.querySelector('input');
+        checkbox.addEventListener('change', () => {
+          activeCustomizingRecipe[ing.id] = checkbox.checked;
+          calculateModalPrice();
+        });
+
+        custIngredientsList.appendChild(label);
+      });
+    }
+
+    calculateModalPrice();
+    modalCustomization.classList.remove('hidden');
+  }
+
+  // Close Customization Modal
+  if (custBtnCancel) {
+    custBtnCancel.addEventListener('click', () => {
+      modalCustomization.classList.add('hidden');
+      activeCustomizingItem = null;
     });
   }
 
-  function renderCartFooter() {
-    const { cart } = store.getState();
-    const totals = calculateCartTotals(cart);
+  // Confirm Customization (Add New or Update Existing Line)
+  if (custBtnConfirm) {
+    custBtnConfirm.addEventListener('click', () => {
+      if (!activeCustomizingItem) return;
 
-    if (footerItemBadge) footerItemBadge.textContent = String(totals.count);
-    if (footerCartTotal) footerCartTotal.textContent = formatCentavos(totals.grandTotal);
+      let ingredients = [];
+      try {
+        ingredients = JSON.parse(activeCustomizingItem.base_ingredients_json);
+      } catch (e) {}
 
-    if (btnCheckout) {
-      btnCheckout.disabled = totals.count === 0;
-    }
+      let modTotal = 0;
+      const modSummary = [];
 
-    if (footerCartSummaryText) {
-      if (cart.length === 0) {
-        footerCartSummaryText.textContent = 'Your cart is empty';
-      } else {
-        const summary = cart.map((c) => `${c.emoji} ${c.quantity}`).join('  ');
-        footerCartSummaryText.textContent = summary;
-      }
-    }
-
-    // Render Drawer Items if open
-    if (cartDrawerItems) {
-      cartDrawerItems.innerHTML = '';
-      if (cart.length === 0) {
-        cartDrawerItems.innerHTML =
-          '<div class="text-center py-4 text-xs font-bold text-slate-400 uppercase">NO ITEMS ADDED YET</div>';
-      } else {
-        cart.forEach((c) => {
-          const row = document.createElement('div');
-          row.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200';
-          row.innerHTML = `
-            <div class="flex items-center gap-2">
-              <span class="text-xl">${c.emoji}</span>
-              <div>
-                <div class="text-xs font-black text-neutral">${c.name}</div>
-                <div class="text-[10px] text-slate-500 font-mono">${formatCentavos(c.unitPrice)} each</div>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <button data-action="dec" class="w-7 h-7 rounded-lg bg-white border border-slate-300 text-xs font-black touch-press">-</button>
-              <span class="text-xs font-black font-mono w-4 text-center">${c.quantity}</span>
-              <button data-action="inc" class="w-7 h-7 rounded-lg bg-white border border-slate-300 text-xs font-black touch-press">+</button>
-              <button data-action="del" class="w-7 h-7 rounded-lg bg-red-50 text-red-600 border border-red-200 text-xs font-black touch-press">✕</button>
-            </div>
-          `;
-
-          row.querySelector('[data-action="inc"]').addEventListener('click', () => {
-            store.updateCartQuantity(c.cartItemId, 1);
-          });
-          row.querySelector('[data-action="dec"]').addEventListener('click', () => {
-            store.updateCartQuantity(c.cartItemId, -1);
-          });
-          row.querySelector('[data-action="del"]').addEventListener('click', () => {
-            store.removeFromCart(c.cartItemId);
-          });
-
-          cartDrawerItems.appendChild(row);
-        });
-      }
-    }
-  }
-
-  // --- CUSTOMIZATION MODAL CONTROLLER ---
-  function openCustomizationModal(item) {
-    activeCustomizingItem = item;
-    activeModifierState = (item.modifiers || []).map((m) => ({
-      ...m,
-      selected: !!m.included
-    }));
-
-    if (modalItemEmoji) modalItemEmoji.textContent = item.emoji;
-    if (modalItemName) modalItemName.textContent = item.name;
-
-    updateModalPricePreview();
-    renderModalModifiers();
-
-    if (modalCustomization) modalCustomization.classList.remove('hidden');
-  }
-
-  function renderModalModifiers() {
-    if (!modalModifiersList) return;
-    modalModifiersList.innerHTML = '';
-
-    activeModifierState.forEach((mod, idx) => {
-      const row = document.createElement('label');
-      row.className = `flex items-center justify-between p-3 rounded-2xl border-2 cursor-pointer select-none touch-press transition-all ${
-        mod.selected ? 'bg-amber-50/60 border-primary' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
-      }`;
-
-      const deltaBadge =
-        mod.priceDelta > 0
-          ? `<span class="text-xs font-black font-mono text-amber-700">+${formatCentavos(mod.priceDelta)}</span>`
-          : '<span class="text-[10px] font-bold text-slate-400 uppercase">INCLUDED</span>';
-
-      row.innerHTML = `
-        <div class="flex items-center gap-3">
-          <input type="checkbox" ${mod.selected ? 'checked' : ''} class="checkbox checkbox-primary checkbox-sm rounded-md" />
-          <span class="text-xs font-bold text-neutral">${mod.name}</span>
-        </div>
-        ${deltaBadge}
-      `;
-
-      const input = row.querySelector('input');
-      input.addEventListener('change', () => {
-        activeModifierState[idx].selected = input.checked;
-        updateModalPricePreview();
-        renderModalModifiers();
+      ingredients.forEach((ing) => {
+        const isChecked = !!activeCustomizingRecipe[ing.id];
+        if (ing.price_delta > 0 && isChecked) {
+          modTotal += ing.price_delta;
+          modSummary.push(`+ ${ing.name}`);
+        } else if (!ing.required && !isChecked && ing.included) {
+          modSummary.push(`No ${ing.name}`);
+        }
       });
 
-      modalModifiersList.appendChild(row);
+      const unitPrice = activeCustomizingItem.price + modTotal;
+
+      if (modalMode === 'edit' && activeEditingIndex >= 0 && cart[activeEditingIndex]) {
+        // Update existing line
+        cart[activeEditingIndex].recipe = activeCustomizingRecipe;
+        cart[activeEditingIndex].modifiersTotal = modTotal;
+        cart[activeEditingIndex].unitPrice = unitPrice;
+        cart[activeEditingIndex].modifiersSummary = modSummary;
+      } else {
+        // Add new item
+        const recipeKey = JSON.stringify(activeCustomizingRecipe);
+        const existing = cart.find(
+          (c) => c.menuItemId === activeCustomizingItem.id && JSON.stringify(c.recipe) === recipeKey
+        );
+
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          cart.push({
+            cartItemId: 'item_' + Math.random().toString(36).substr(2, 9),
+            menuItemId: activeCustomizingItem.id,
+            name: activeCustomizingItem.name,
+            quantity: 1,
+            unitPrice: unitPrice,
+            modifiersTotal: modTotal,
+            recipe: activeCustomizingRecipe,
+            modifiersSummary: modSummary
+          });
+        }
+      }
+
+      modalCustomization.classList.add('hidden');
+      activeCustomizingItem = null;
+
+      calculateTotals();
+      renderSummaryList();
     });
   }
 
-  function updateModalPricePreview() {
-    if (!activeCustomizingItem || !modalItemPrice) return;
-    const extra = activeModifierState.reduce((sum, m) => (m.selected && m.priceDelta > 0 ? sum + m.priceDelta : sum), 0);
-    modalItemPrice.textContent = formatCentavos(activeCustomizingItem.price + extra);
-  }
-
-  function closeModal() {
-    if (modalCustomization) modalCustomization.classList.add('hidden');
-    activeCustomizingItem = null;
-    activeModifierState = [];
-  }
-
-  if (modalBtnCancel) modalBtnCancel.addEventListener('click', closeModal);
-  if (modalBtnApply) {
-    modalBtnApply.addEventListener('click', () => {
-      if (!activeCustomizingItem) return;
-      store.addToCart(activeCustomizingItem, activeModifierState, 1);
-      closeModal();
-    });
-  }
-
-  // --- CONFIRMATION SCREEN ---
-  function showConfirmationScreen() {
-    const { orderNumber, serviceType } = store.getState();
-    if (confirmedOrderNumber) confirmedOrderNumber.textContent = `#${String(orderNumber).padStart(3, '0')}`;
-    if (confirmedTimestamp) confirmedTimestamp.textContent = formatDateTime();
-    if (confirmedServiceBadge) {
-      const s = RESORT_SERVICES.find((srv) => srv.id === serviceType);
-      confirmedServiceBadge.textContent = s ? s.title : 'RESORT ORDER';
+  // --- EXPANDABLE BOTTOM TRAY TOGGLE ---
+  function toggleTray(forceExpand) {
+    if (typeof forceExpand === 'boolean') {
+      isTrayExpanded = forceExpand;
+    } else {
+      isTrayExpanded = !isTrayExpanded;
     }
 
-    let countdown = 8;
-    if (confirmedTimer) confirmedTimer.textContent = `Returning to welcome screen in ${countdown}s...`;
-
-    if (confirmedTimerInterval) clearInterval(confirmedTimerInterval);
-    confirmedTimerInterval = setInterval(() => {
-      countdown -= 1;
-      if (confirmedTimer) confirmedTimer.textContent = `Returning to welcome screen in ${countdown}s...`;
-      if (countdown <= 0) {
-        clearInterval(confirmedTimerInterval);
-        finishAndReset();
-      }
-    }, 1000);
-
-    store.setScreen('confirmed');
+    if (isTrayExpanded) {
+      trayContentBody.classList.remove('hidden');
+      trayToggleIcon.textContent = '▼';
+    } else {
+      trayContentBody.classList.add('hidden');
+      trayToggleIcon.textContent = '▲';
+    }
   }
 
-  function finishAndReset() {
-    if (confirmedTimerInterval) clearInterval(confirmedTimerInterval);
-    store.resetOrder();
-    initOrderSequence();
-  }
-
-  if (btnFinishOrder) btnFinishOrder.addEventListener('click', finishAndReset);
-
-  // --- BIND TOP & GLOBAL ACTIONS ---
-  if (btnWelcomeStart) {
-    btnWelcomeStart.addEventListener('click', () => {
-      store.setScreen('service-option');
+  if (trayHandleBar) {
+    trayHandleBar.addEventListener('click', () => {
+      toggleTray();
     });
   }
+
+  if (btnToggleTray) {
+    btnToggleTray.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleTray();
+    });
+  }
+
+  // --- CART / ORDER SUMMARY FINANCIAL ARITHMETIC ---
+  function calculateTotals() {
+    let subtotal = 0;
+    for (const item of cart) {
+      subtotal += item.unitPrice * item.quantity;
+    }
+    const vat = Math.round(subtotal * 0.12);
+    const grandTotal = subtotal + vat;
+    const count = cart.reduce((sum, i) => sum + i.quantity, 0);
+
+    // Update UI
+    if (totalSubtotal) totalSubtotal.textContent = formatCentavos(subtotal);
+    if (totalVat) totalVat.textContent = formatCentavos(vat);
+    if (totalGrand) totalGrand.textContent = formatCentavos(grandTotal);
+    if (trayQuickTotal) trayQuickTotal.textContent = formatCentavos(grandTotal);
+    if (headerItemsCount) headerItemsCount.textContent = count;
+    if (traySummaryCount) traySummaryCount.textContent = count;
+    if (btnProceedCheckout) btnProceedCheckout.disabled = cart.length === 0;
+
+    return { subtotal, vat, grandTotal, count };
+  }
+
+  // --- RENDER ORDER SUMMARY LIST (CLICK A LINE TO CUSTOMIZE IT) ---
+  function renderSummaryList() {
+    if (!summaryItemsList) return;
+    summaryItemsList.innerHTML = '';
+
+    if (cart.length === 0) {
+      summaryItemsList.innerHTML = `
+        <div class="text-center py-6 text-xs text-zinc-400 font-bold uppercase">
+          [ NO ITEMS ADDED YET - TAP ANY ITEM ABOVE ]
+        </div>
+      `;
+      return;
+    }
+
+    cart.forEach((cartItem, idx) => {
+      const row = document.createElement('div');
+      row.className = 'p-2.5 border-2 border-zinc-900 bg-zinc-50 hover:bg-zinc-100 flex items-center justify-between text-xs cursor-pointer select-none transition-colors group';
+
+      const modHtml = cartItem.modifiersSummary && cartItem.modifiersSummary.length > 0
+        ? `<div class="text-[10px] text-zinc-500 mt-0.5 font-mono">${cartItem.modifiersSummary.join(', ')}</div>`
+        : '';
+
+      row.innerHTML = `
+        <div class="flex-1 pr-3 row-clickable">
+          <div class="font-black text-zinc-900 uppercase flex items-center gap-1.5">
+            <span>${cartItem.name}</span>
+            <span class="text-[9px] font-normal text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity underline">
+              [ Tap line to customize ]
+            </span>
+          </div>
+          <div class="text-[10px] font-mono text-zinc-600">${formatCentavos(cartItem.unitPrice)} each</div>
+          ${modHtml}
+        </div>
+
+        <div class="flex items-center gap-2.5 shrink-0" onclick="event.stopPropagation()">
+          <div class="flex items-center border-2 border-zinc-900 bg-white">
+            <button class="btn-dec px-2.5 py-1 font-black touch-press hover:bg-zinc-100">-</button>
+            <span class="px-2 font-bold font-mono text-xs">${cartItem.quantity}</span>
+            <button class="btn-inc px-2.5 py-1 font-black touch-press hover:bg-zinc-100">+</button>
+          </div>
+          <div class="w-16 text-right font-black font-mono text-xs">
+            ${formatCentavos(cartItem.unitPrice * cartItem.quantity)}
+          </div>
+          <button class="btn-del text-red-600 font-bold px-1.5 hover:underline touch-press">[X]</button>
+        </div>
+      `;
+
+      row.querySelector('.row-clickable').addEventListener('click', () => {
+        const matchedMenuItem = menuItems.find((m) => m.id === cartItem.menuItemId);
+        if (matchedMenuItem) {
+          openCustomizationModal(matchedMenuItem, 'edit', idx);
+        }
+      });
+
+      row.querySelector('.btn-dec').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (cartItem.quantity > 1) {
+          cartItem.quantity -= 1;
+        } else {
+          cart.splice(idx, 1);
+        }
+        calculateTotals();
+        renderSummaryList();
+      });
+
+      row.querySelector('.btn-inc').addEventListener('click', (e) => {
+        e.stopPropagation();
+        cartItem.quantity += 1;
+        calculateTotals();
+        renderSummaryList();
+      });
+
+      row.querySelector('.btn-del').addEventListener('click', (e) => {
+        e.stopPropagation();
+        cart.splice(idx, 1);
+        calculateTotals();
+        renderSummaryList();
+      });
+
+      summaryItemsList.appendChild(row);
+    });
+  }
+
+  // --- WELCOME POSTER: TAP ANYWHERE TO START ---
   if (screenWelcome) {
-    screenWelcome.addEventListener('click', (e) => {
-      // Tap anywhere on welcome screen progresses
-      if (e.target.closest('#btn-welcome-start') || e.currentTarget === e.target) {
-        store.setScreen('service-option');
+    screenWelcome.addEventListener('click', () => {
+      showScreen(screenDining);
+    });
+  }
+
+  if (optDineIn) {
+    optDineIn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      diningMode = 'dine-in';
+      if (menuDiningTag) menuDiningTag.textContent = 'DINE IN';
+      showScreen(screenMenu);
+    });
+  }
+
+  if (optTakeOut) {
+    optTakeOut.addEventListener('click', (e) => {
+      e.stopPropagation();
+      diningMode = 'take-out';
+      if (menuDiningTag) menuDiningTag.textContent = 'TAKE OUT';
+      showScreen(screenMenu);
+    });
+  }
+
+  if (btnDiningCancel) {
+    btnDiningCancel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showScreen(screenWelcome);
+    });
+  }
+
+  if (btnMenuBack) {
+    btnMenuBack.addEventListener('click', () => {
+      if (confirm('Start over and reset current order?')) {
+        cart = [];
+        calculateTotals();
+        renderSummaryList();
+        toggleTray(false);
+        showScreen(screenWelcome);
       }
     });
   }
 
-  if (btnServiceBack) {
-    btnServiceBack.addEventListener('click', () => {
-      store.setScreen('welcome');
-    });
-  }
+  // --- CHECKOUT & COUNTER PAYMENT EXECUTION ---
+  if (btnProceedCheckout) {
+    btnProceedCheckout.addEventListener('click', async () => {
+      if (cart.length === 0) return;
 
-  if (serviceFoodDrinks) {
-    serviceFoodDrinks.addEventListener('click', () => {
-      store.setServiceType('food-drinks');
-      store.setScreen('catalog');
-    });
-  }
-  if (serviceActivities) {
-    serviceActivities.addEventListener('click', () => {
-      store.setServiceType('resort-activities');
-      store.setScreen('catalog');
-    });
-  }
+      const { subtotal, vat, grandTotal } = calculateTotals();
 
-  if (langEn) langEn.addEventListener('click', () => store.setLanguage('EN'));
-  if (langFil) langFil.addEventListener('click', () => store.setLanguage('FIL'));
+      try {
+        // 1. Commit Order to SQLite with 'pay-at-counter'
+        const orderDTO = {
+          diningMode: diningMode,
+          paymentMethod: 'cashier-counter',
+          subtotal: subtotal,
+          vat: vat,
+          totalAmount: grandTotal,
+          items: cart
+        };
 
-  if (cartFooterPreview) {
-    cartFooterPreview.addEventListener('click', () => {
-      if (cartTrayDrawer) cartTrayDrawer.classList.toggle('hidden');
-    });
-  }
+        console.log('[Kiosk] Registering order in SQLite for cashier counter payment...');
+        const createdOrder = await window.kioskAPI.createOrder(orderDTO);
+        currentOrderResult = createdOrder;
 
-  if (btnClearCart) {
-    btnClearCart.addEventListener('click', () => {
-      store.clearCart();
-    });
-  }
+        // 2. Auto-Print Thermal Receipt for the Cashier
+        console.log('[Kiosk] Auto-printing cashier confirmation receipt...');
+        const printResult = await window.kioskAPI.printReceipt({
+          orderId: createdOrder.id,
+          orderNumber: createdOrder.orderNumber,
+          diningMode: createdOrder.diningMode,
+          paymentMethod: 'PAY AT CASHIER COUNTER',
+          subtotal: createdOrder.subtotal,
+          vat: createdOrder.vat,
+          totalAmount: createdOrder.totalAmount,
+          items: cart,
+          createdAt: createdOrder.createdAt,
+          storeName: 'EXPRESS ORDER KIOSK',
+          kioskId: 'COUNTER PAYMENT SLIP'
+        });
 
-  if (btnCheckout) {
-    btnCheckout.addEventListener('click', () => {
-      const { cart } = store.getState();
-      if (cart.length > 0) {
-        showConfirmationScreen();
+        lastReceiptText = printResult.receiptText;
+
+        // 3. Update Confirmation Screen
+        const dateFormatted = new Date(createdOrder.createdAt).toLocaleString('en-US');
+        if (confirmTimestamp) confirmTimestamp.textContent = dateFormatted;
+        if (confirmOrderNumber) confirmOrderNumber.textContent = '#' + String(createdOrder.orderNumber).padStart(3, '0');
+        if (confirmDiningMode) confirmDiningMode.textContent = createdOrder.diningMode.toUpperCase().replace('-', ' ');
+
+        // 4. Generate and Display Barcode for Cashier Scan
+        const barcodeCode = `ORD-${String(createdOrder.orderNumber).padStart(3, '0')}-${createdOrder.id.substring(0, 8).toUpperCase()}`;
+        if (barcodeContainer) barcodeContainer.innerHTML = generateBarcodeSVG(barcodeCode, 260, 60);
+        if (barcodeLabel) barcodeLabel.textContent = barcodeCode;
+
+        // 5. Show Confirmation Screen with instructions (Receipt prints physically at the kiosk)
+        showScreen(screenConfirmed);
+
+        // Start 5-second countdown directly on confirmation screen
+        let secondsLeft = 5;
+        if (confirmTimer) confirmTimer.textContent = `Returning to start in ${secondsLeft}s...`;
+        if (receiptTimerInterval) clearInterval(receiptTimerInterval);
+        receiptTimerInterval = setInterval(() => {
+          secondsLeft--;
+          if (confirmTimer) confirmTimer.textContent = `Returning to start in ${secondsLeft}s...`;
+          if (secondsLeft <= 0) {
+            clearInterval(receiptTimerInterval);
+            showScreen(screenWelcome);
+          }
+        }, 1000);
+
+        // 6. Reset Cart for Next Customer
+        cart = [];
+        calculateTotals();
+        renderSummaryList();
+        toggleTray(false);
+
+        nextOrderNumber = await window.kioskAPI.getNextOrderNumber();
+        const nextStr = '#' + String(nextOrderNumber).padStart(3, '0');
+        if (menuOrderNum) menuOrderNum.textContent = nextStr;
+
+      } catch (err) {
+        console.error('[Kiosk] Checkout Error:', err);
+        alert('Order Error: ' + err.message);
       }
     });
   }
 
-  // --- STATE SUBSCRIPTION (Observer pattern) ---
-  store.subscribe((state, changedKeys) => {
-    if (changedKeys.includes('screen')) {
-      switchScreen(state.screen);
-    }
-    if (changedKeys.includes('serviceType') || changedKeys.includes('orderNumber') || changedKeys.includes('language')) {
-      renderHeader();
-    }
-    if (changedKeys.includes('activeCategory')) {
-      renderCategories();
-      renderProductGrid();
-    }
-    if (changedKeys.includes('cart')) {
-      renderCartFooter();
-    }
-  });
+  if (btnFinishOrder) {
+    btnFinishOrder.addEventListener('click', () => {
+      if (receiptTimerInterval) clearInterval(receiptTimerInterval);
+      showScreen(screenWelcome);
+    });
+  }
 
-  // --- INITIAL BOOT ---
-  await initOrderSequence();
-  renderHeader();
-  renderCategories();
-  renderProductGrid();
-  renderCartFooter();
-  switchScreen(store.getState().screen);
-
-  console.log("[3L's Beach Resort] Kiosk shell successfully initialized.");
+  // Boot Kiosk Catalog Data
+  loadInitialData();
 });
