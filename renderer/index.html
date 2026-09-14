@@ -226,6 +226,64 @@
 
 
     <!-- ============================================================= -->
+    <!-- MODAL: FINAL ORDER REVIEW & CONFIRMATION                      -->
+    <!-- ============================================================= -->
+    <div id="modal-final-confirm" class="hidden absolute inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+      <div class="bg-white border-3 border-sky-600 rounded-3xl w-full max-w-md flex flex-col max-h-[90%] shadow-2xl overflow-hidden">
+        <!-- Header -->
+        <div class="p-4 bg-sky-800 text-white flex items-center justify-between border-b border-sky-900">
+          <div>
+            <div class="text-[10px] font-black text-amber-300 uppercase tracking-wider">[ STEP 2: REVIEW ORDER ]</div>
+            <div class="text-base font-black uppercase tracking-wide">CONFIRM YOUR ORDER</div>
+          </div>
+          <span id="final-confirm-dining-mode" class="px-3 py-1 bg-amber-400 text-slate-900 rounded-full text-xs font-black uppercase tracking-wider font-mono shadow-xs">
+            DINE IN
+          </span>
+        </div>
+
+        <!-- Order Items Review List -->
+        <div class="p-4 flex-1 overflow-y-auto bg-slate-50 flex flex-col gap-2.5">
+          <div class="text-[11px] font-black uppercase text-slate-500 tracking-wider">ORDER SUMMARY:</div>
+          <div id="final-confirm-items-list" class="flex flex-col gap-2">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Totals Breakdown Card -->
+          <div class="mt-2 p-3.5 bg-sky-50 border-2 border-sky-200 rounded-2xl flex flex-col gap-1 text-xs">
+            <div class="flex justify-between text-slate-600 font-bold">
+              <span>Subtotal:</span>
+              <span id="final-confirm-subtotal" class="font-mono text-slate-800">₱0.00</span>
+            </div>
+            <div class="flex justify-between text-slate-600 font-bold">
+              <span>VAT (12%):</span>
+              <span id="final-confirm-vat" class="font-mono text-slate-800">₱0.00</span>
+            </div>
+            <div class="border-t border-sky-300 pt-1.5 mt-0.5 flex justify-between items-center text-sm font-black text-sky-950">
+              <span>TOTAL AMOUNT:</span>
+              <span id="final-confirm-total" class="font-mono text-base text-sky-900 bg-amber-300 px-2 py-0.5 rounded-lg">₱0.00</span>
+            </div>
+          </div>
+
+          <!-- Cashier Counter Notice -->
+          <div class="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-center text-[11px] text-amber-900 font-bold">
+            💵 Payment will be made at the cashier counter with your printed receipt.
+          </div>
+        </div>
+
+        <!-- Decision Action Buttons -->
+        <div class="p-4 border-t border-slate-200 bg-white grid grid-cols-2 gap-3">
+          <button id="btn-final-cancel" class="py-3 border-2 border-slate-300 rounded-2xl bg-slate-100 active:bg-slate-200 font-black text-xs text-slate-700 touch-press shadow-xs text-center">
+            &lt; NO, EDIT ORDER
+          </button>
+          <button id="btn-final-confirm" class="py-3 rounded-2xl border-2 border-emerald-500 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black text-xs touch-press uppercase tracking-wider shadow-md text-center">
+            YES, PLACE ORDER &gt;
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ============================================================= -->
     <!-- SCREEN 4: ORDER CONFIRMED (PAY AT CASHIER COUNTER WITH RECEIPT)-->
     <!-- ============================================================= -->
     <div id="screen-confirmed" class="kiosk-screen hidden p-6 flex flex-col justify-between overflow-y-auto bg-gradient-to-b from-sky-50 via-white to-amber-50/40">

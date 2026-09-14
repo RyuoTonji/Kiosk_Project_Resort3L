@@ -3,6 +3,7 @@ import { ScreenRouter } from '../views/screen-router.js';
 import { CatalogView } from '../views/catalog-view.js';
 import { CustomizationModal } from '../views/customization-modal.js';
 import { SummaryTrayView } from '../views/summary-tray-view.js';
+import { FinalConfirmationModal } from '../views/final-confirmation-modal.js';
 import { ConfirmationView } from '../views/confirmation-view.js';
 
 /**
@@ -38,6 +39,10 @@ export class KioskApp {
       onDelete: (index) => this.cartManager.removeItem(index),
       onCheckout: () => this.handleCheckout(),
       onStartOver: () => this.handleStartOver()
+    });
+
+    this.finalConfirmationModal = new FinalConfirmationModal({
+      onConfirm: () => this.executeOrderPlacement()
     });
 
     this.confirmationView = new ConfirmationView({
@@ -209,9 +214,20 @@ export class KioskApp {
   }
 
   /**
-   * Handle checkout transaction pipeline.
+   * Handle checkout button press: Opens final confirmation modal for customer review.
    */
-  async handleCheckout() {
+  handleCheckout() {
+    const items = this.cartManager.getItems();
+    if (items.length === 0) return;
+
+    const totals = this.cartManager.calculateTotals();
+    this.finalConfirmationModal.open(items, totals, this.diningMode);
+  }
+
+  /**
+   * Execute final order placement after customer confirms in the modal.
+   */
+  async executeOrderPlacement() {
     const items = this.cartManager.getItems();
     if (items.length === 0) return;
 
